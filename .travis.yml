@@ -1,0 +1,27 @@
+dist: xenial
+language: python
+python: 3.7
+cache:
+  directories:
+  - "$HOME/.cache/pip"
+  - "$TRAVIS_BUILD_DIR/.tox"
+install: pip install tox
+script:
+- |
+  if [[ $TRAVIS_TAG == "" ]]; then
+    tox
+  fi
+deploy:
+- provider: pypi
+  distributions: sdist bdist_wheel
+  user: __token__
+  password:
+    #TODO Update this token
+    secure: bogus
+  skip_cleanup: true
+  on:
+    tags: true
+- provider: script
+  script: bash deploy-docker
+  on:
+    tags: true

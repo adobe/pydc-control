@@ -1,0 +1,117 @@
+prefixes:
+  # This prefix is used for docker compose container names and service names
+  service: mynamespace_
+  # This prefix is used for any core services (marked with core: true below) instead of the above prefix
+  core: core_
+
+# This is used when running a configuration service or specially named containers
+target-services:
+  # This is used when running a configuration service or specially named containers
+  config: global_config
+
+required-options:
+# Environment variables in docker-compose.env that are required
+# If they are not defined, the control script will fail with an error
+- MYVAR1
+
+docker-compose:
+  # The project name used for docker-compose -p
+  project: myproject
+  # The network name used for all containers in the application
+  network: mynetwork
+  # A list of tags available to use for containers from the command line
+  tags:
+  - latest
+  - stage
+  - prod
+  # The registry to use for dynamic image references (when image_path is used)
+  registry: my-docker-registry.com
+  # Overrides registries by tag name
+  registries-by-tag:
+    latest: my-latest-registry.com
+  # Any other properties are passed directly through to docker compose at the top level
+  volumes:
+    my_volume:
+
+# A list of projects included in the control script (available via -p)
+projects:
+  project1:
+    # The directory where the project is located, next to the control script directory
+    directory: my-project1
+    # The repository to clone the project from
+    repository: git@github.com:myorg/project1.git
+    # A list of services (containers) to run
+    services:
+    # The service name is automatically prefixed with the service prefix configured above
+    # e.g. this would be registered as mynamespace_service1 in the generated docker compose
+    #      file and as the container name
+    - name: service1
+
+      # Image references may be hardcoded
+      image: myimage:mytag
+      # OR dynamically generated (see README)
+      #image_path: /my-image-path
+
+      # (Optional) This service is disabled by default and can be enabled via the command line
+      #enable: true
+
+      # (Optional) This service is enabled by default but can be disabled via the command line
+      #disable: true
+
+      # (Optional) This is a core service, which gets a different prefix (configured above) and is started
+      # before any other service. Ports are also checked for core services during startup.
+      #core: true
+
+      # (Optional, only available for core services) Waits for specific paths to be available on specific ports.
+      # Further containers will not be started until this container is responding with a 200 on these ports with
+      # the given path. Note that this only really works for HTTP resources currently.
+      #wait-for-ports:
+      #  80: /ping
+
+      # (Optional) Define a custom env-file list. Most typically used to prevent the docker-compose.env file in the
+      # control project from being used this service by setting it to an empty list.
+      #env-file: []
+
+      # (Optional) Set dynamic environment variables depending on whether the service is enabled or disabled
+      # This should only be used when using the enable/disable flag as well.
+      #dynamic-options:
+      #  # The name of the environment variable to set or to remove
+      #  MYVAR2:
+      #    # The value given to the variable when the service is enabled
+      #    enabled: http://gauntlethost:8000
+      #    # The value given to the variable when the service is disabled, an empty string will remove the variable
+      #    # from the docker-compose.env file
+      #    disabled: ''
+
+      # All other parameters are passed directly through to docker-compose
+      #ports: ...
+      # NOTE: All volume mounts must use an absolute or relative directory (e.g. ../my-project1/mymount)
+      #volumes: ...
+      #...
+
+  # Services without a project may be used in a project entry without a directory or repository
+  core-services:
+    # These must be set to null if there is no actual project
+    directory: null
+    repository: null
+
+    services:
+    # Core services are typically shared resources (such as databases) that are used by many or all projects in the app
+    - name: mongodb
+      core: true
+      image: mongo:3.6
+      # Prevent the default environment from being added from docker-compose.env
+      env_file: []
+      volumes:
+      # NOTE: All volume mounts must use an absolute or relative directory
+      - "../app-control/mongo_data:/data/db"
+      ports:
+      - "27017:27017"
+
+  # Projects that should be cloned but don't have services may also be defined here. These will be cloned and
+  # checked out by commands and typically include static configuration files or files that are volume mounted
+  # into other projects.
+  static-project:
+    directory: static-project
+    repository: git@github.com:myorg/static-project.git
+    services: []

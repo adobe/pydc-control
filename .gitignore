@@ -1,0 +1,10 @@
+.env
+.idea
+
+*.pyc
+*.swp
+pytest_cache
+
+docker-compose.env
+docker-compose.yml
+

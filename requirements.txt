@@ -1,0 +1,4 @@
+Jinja2>=2.7.2
+PyYAML>=5.1.2
+requests>=2.23.0
+#bump2version is used for bumping versions, but not within the application itself
