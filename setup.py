@@ -6,7 +6,7 @@ __version__ = open(join(dirname(__file__), 'pydc_control/VERSION')).read().strip
 install_requires = (
     'Jinja2>=2.7.2',
     'PyYAML>=5.1.2',
-    'requests>=2.23.0',
+    'requests>=2',
 )  # yapf: disable
 
 excludes = (
