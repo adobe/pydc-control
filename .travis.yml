@@ -16,12 +16,7 @@ deploy:
   distributions: sdist bdist_wheel
   user: __token__
   password:
-    #TODO Update this token
-    secure: bogus
+    secure: qW69k9qnPgTsAnamQ1II3HoLQGvre+raHyoFy8SXt6cIxPl05GKjihzHSC8CXSef/arSmG3WFvA9Y3C/BG/evfdL0OIY48BKXxcTvDUSacHlK1Ui+QE7qeky0thkjE8kcQx6NqdDEkNuo0mF6oHziKGoD8/X8AlFB0PSCtzvpHa8ez+14N+nhZLJW36ni3+T2Au0wxnAb9zzis815VMVh1w7jROuXJLycyI2S/O6MrLFbaIMwlS+Z8H1/qGb8pdDDhWEgreTj4400BfPzfgPf5CO2d8vyXqY5LTCV/KPvjBlFc4iFHVPzNWnSwe0Aib+2UpyKHPA3Gxnj1aNlKJWGzkcNgtWa+8wSYohq28yO/IStW2inzlgBRW2Ubkhy0hG06Iz4AaUTwQmd02Kb3aklYc6mhpODyxoGA97uQ7IsWM0h3Sd3KQ6eyFTumm4Ow2VVKePzPC0RQK6N0xahyYQ3O3m1skl6JVQO3pxOGcmeOwuXeWi3b4m1e8PyziWHAXBUNOlbm9t/KlGPXFvs+LX3KdKcGplEj4E+6in9U8sp+nEvdCbHiTae1cyEKZ0dAqp6lAHZavbV4dkD4PNwonE3sDRsSbhSq4Mgl/pyQ8sbsL7gyNBc5h+9k5XlWuIuXjqBFQWZoMHPKSqnhIcneGkrc6dn++GqpuZhhx6OqkogZE=
   skip_cleanup: true
-  on:
-    tags: true
-- provider: script
-  script: bash deploy-docker
   on:
     tags: true
