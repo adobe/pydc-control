@@ -232,6 +232,9 @@ def _run_checkout(args: argparse.Namespace):
         projects = Project.find_all()
     else:
         projects = _get_dev_projects(args)
+    if len(projects) == 0:
+        raise KnownException(f'There are no projects currently being developed against, please set projects')
+
     parent_dir = os.path.realpath(os.path.join(BASE_DIR, '..'))
     log.get_logger().info(f'Checking out {len(projects)} projects to {parent_dir}')
     result = os.EX_OK
@@ -434,6 +437,9 @@ def _get_repo_status(args: argparse.Namespace):
         projects = Project.find_all()
     else:
         projects = _get_dev_projects(args)
+    if len(projects) == 0:
+        raise KnownException(f'There are no projects currently being developed against, please set projects')
+
     log.get_logger().info(f'Getting the git status for {len(projects)} projects')
 
     for project in projects:
