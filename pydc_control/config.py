@@ -1,6 +1,6 @@
 import os
 import yaml
-from typing import Any, Dict, Iterable
+from typing import Any, Dict, Iterable, Optional
 
 from .exceptions import KnownException
 
@@ -21,6 +21,10 @@ def set_base_dir(base_dir: str) -> None:
     global BASE_DIR, CONFIG_PATH
     BASE_DIR = base_dir
     CONFIG_PATH = os.path.join(BASE_DIR, CONFIG_FILE)
+
+
+def get_base_dir() -> Optional[str]:
+    return BASE_DIR
 
 
 def _get_config() -> Dict[str, Any]:

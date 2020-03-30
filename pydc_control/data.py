@@ -2,7 +2,7 @@
 import os
 from typing import Any, Dict, List, Optional
 
-from .config import BASE_DIR, get_project_config, get_service_prefix
+from .config import get_base_dir, get_project_config, get_service_prefix
 from .exceptions import KnownException
 
 
@@ -132,7 +132,7 @@ class Project:
     def path(self) -> str:
         if not self.directory:
             raise KnownException(f'Project {self.name} does not have a directory, cannot get a path for it')
-        return os.path.realpath(os.path.join(BASE_DIR, '..', self.directory))
+        return os.path.realpath(os.path.join(get_base_dir(), '..', self.directory))
 
     @classmethod
     def find_all(cls) -> List['Project']:
