@@ -228,12 +228,12 @@ def _wait_for_open_ports(service: Service) -> None:
 
 
 def _run_checkout(args: argparse.Namespace):
-    if args.all_projects:
+    if args.all_projects or not args.dev_project_names:
         projects = Project.find_all()
     else:
         projects = _get_dev_projects(args)
     if len(projects) == 0:
-        raise KnownException(f'There are no projects currently being developed against, please set projects')
+        raise KnownException(f'There are no projects available, please set projects')
 
     parent_dir = os.path.realpath(os.path.join(BASE_DIR, '..'))
     log.get_logger().info(f'Checking out {len(projects)} projects to {parent_dir}')
@@ -241,22 +241,25 @@ def _run_checkout(args: argparse.Namespace):
     for project in projects:
         # Skip projects without a repository
         if not project.repository:
+            log.get_logger().debug(f'Skipping project {project.name} since it does not have a configured repository')
             continue
 
         if os.path.exists(project.path):
+            log.get_logger().info(f'########### {project.name} (pulling changes) ###########')
             commands = ['git', 'pull', 'upstream', 'master']
             cwd = project.path
         else:
+            log.get_logger().info(f'########### {project.name} (cloning) ###########')
             commands = ['git', 'clone', '--origin', 'upstream', project.repository]
             cwd = parent_dir
         exit_code = subprocess.call(commands, cwd=cwd)
 
         if exit_code:
-            log.get_logger().warning(f'Could not clone or update {project.path}, see errors above')
+            log.get_logger().warning(f'Could not clone or update {project.name} ({project.path}), see errors above')
             result = exit_code
 
         if not result and len(args.extra_remotes) > 0:
-            log.get_logger().info('Adding any remotes specified  if not already added')
+            log.get_logger().debug('Adding any remotes specified if not already added')
             base_git_path = project.repository.split(':')[0]
             for r in args.extra_remotes:
                 org = name = r[0]
@@ -269,16 +272,36 @@ def _run_checkout(args: argparse.Namespace):
                 with open(os.devnull, 'w') as fnull:
                     exit_code = subprocess.call(command, cwd=project.path, stdout=fnull, stderr=subprocess.STDOUT)
                 if exit_code == 0:
-                    log.get_logger().info(f'Remote {name} already exists.')
+                    log.get_logger().debug(f'Remote {name} already exists in project {project.name}')
                     continue
-                log.get_logger().info(f'Trying to add {name} at {base_git_path}:{org}/{project.directory}.git')
+                log.get_logger().info(f'Trying to add remote {name} at '
+                                      f'{base_git_path}:{org}/{project.directory}.git in project {project.name}')
                 command = [ 'git', 'remote', 'add', name, f'{base_git_path}:{org}/{project.directory}.git' ]
                 exit_code = subprocess.call(command, cwd=project.path)
 
                 if exit_code:
-                    log.get_logger().warning(f'There was a problem adding remote {r} to the service {project}')
+                    log.get_logger().warning(f'There was a problem adding remote {r} in project {project.name}')
 
     return result
+
+
+def _get_repo_status(args: argparse.Namespace):
+    if args.all_projects or not args.dev_project_names:
+        projects = Project.find_all()
+    else:
+        projects = _get_dev_projects(args)
+    if len(projects) == 0:
+        raise KnownException(f'There are no projects available, please set projects')
+
+    log.get_logger().info(f'Getting the git status for {len(projects)} projects')
+
+    for project in projects:
+        log.get_logger().info(f'########### {project.name} ###########')
+        if not project.repository:
+            log.get_logger().info('No configured repository')
+            continue
+
+        subprocess.call(['git', 'status', '--short', '--branch', '--untracked-files=no'], cwd=project.path)
 
 
 def _init_docker_compose(args: argparse.Namespace, dev_projects: List[Project]) -> None:
@@ -432,20 +455,6 @@ def _get_dev_projects(args: argparse.Namespace) -> List[Project]:
     return list(project for project in Project.find_all() if project.name in args.dev_project_names)
 
 
-def _get_repo_status(args: argparse.Namespace):
-    if args.all_projects:
-        projects = Project.find_all()
-    else:
-        projects = _get_dev_projects(args)
-    if len(projects) == 0:
-        raise KnownException(f'There are no projects currently being developed against, please set projects')
-
-    log.get_logger().info(f'Getting the git status for {len(projects)} projects')
-
-    for project in projects:
-        subprocess.call(['git', 'status', '--short', '--branch', '--untracked-files=no'], cwd=project.path)
-
-
 def _get_print_help_func(parser):
     def print_help(args: argparse.Namespace):
         parser.print_help()
@@ -557,7 +566,7 @@ def _parse_args(configure_parsers: Callable) -> argparse.Namespace:
         "-a", "--all-projects",
         dest="all_projects",
         action="store_true",
-        help="get the status of all projects.",
+        help="Get the status of all projects.",
     )
 
     # Docker Status
