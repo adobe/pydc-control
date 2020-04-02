@@ -404,7 +404,7 @@ def _run_dc_build(args: argparse.Namespace):
     docker_compose_args = ['build']
     if args.no_cache:
         docker_compose_args.append('--no-cache')
-    if args.services and not args.all_services:
+    if args.dev_project_names and not args.all_projects:
         dev_projects = _get_dev_projects(args)
         for project in dev_projects:
             docker_compose_args.extend(
