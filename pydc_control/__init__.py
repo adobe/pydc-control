@@ -199,11 +199,13 @@ def _generate_docker_compose(dev_projects: List[Project], tag: str, enabled_stat
     for service, status in enabled_status_by_service.items():
         enabled_services[service.name] = status
     template_config = {
+        'dev_project_names': dev_project_names,
         'enabled_services': enabled_services,
         'tag': tag,
         'registry': registry,
         'network': config.get_dc_network(),
         'core_prefix': config.get_service_prefix('core'),
+        'service_prefix': config.get_service_prefix(),
     }
     for project in dev_projects:
         _render_docker_compose_file(project.path, template_config)
@@ -366,7 +368,9 @@ def _run_docker_compose_with_projects(dev_projects: List[Project], docker_compos
 
             # Only include services in this repo's docker compose file and are not core services
             base_services = docker_utils.read_services_from_dc(DOCKER_COMPOSE_PATH)
+            print(f'base services 1: {base_services}')
             base_services = list(filter(lambda service: service not in core_service_names, base_services))
+            print(f'base services 2: {base_services}')
             base_commands.extend(base_services)
 
             log.get_logger().info(
