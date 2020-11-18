@@ -8,7 +8,7 @@ import subprocess
 import time
 import yaml
 
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Union
 
 from . import config, docker_utils, log
 from .exceptions import KnownException
@@ -404,10 +404,25 @@ def _run_docker_compose(args: argparse.Namespace):
     return _run_docker_compose_internal(args, args.docker_compose_args)
 
 
+def _get_cli_build_args(build_args: Optional[Union[Dict[str, str], List[str]]]) -> List[str]:
+    if not build_args:
+        return []
+    if isinstance(build_args, dict):
+        values = list(f'{key}={value}' for key, value in build_args.items())
+    else:
+        values = build_args
+
+    result = []
+    for value in values:
+        result.extend(['--build-arg', value])
+    return result
+
+
 def _run_dc_build(args: argparse.Namespace):
     docker_compose_args = ['build']
     if args.no_cache:
         docker_compose_args.append('--no-cache')
+    docker_compose_args.extend(_get_cli_build_args(config.get_dc_build_args()))
     if args.dev_project_names and not args.all_projects:
         dev_projects = _get_dev_projects(args)
         for project in dev_projects:

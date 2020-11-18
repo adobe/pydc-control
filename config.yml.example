@@ -29,6 +29,10 @@ docker-compose:
   # Overrides registries by tag name
   registries-by-tag:
     latest: my-latest-registry.com
+  # Optional global build args
+  # This may be a list of string in key=value format or a dictionary of key: value entries
+  build-args:
+  - ARG1=value1
   # Any other properties are passed directly through to docker compose at the top level
   volumes:
     my_volume:

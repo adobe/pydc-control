@@ -1,6 +1,6 @@
 import os
 import yaml
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 from .exceptions import KnownException
 
@@ -107,6 +107,10 @@ def get_dc_network() -> str:
     return _get_config()['docker-compose'].get('network')
 
 
+def get_dc_build_args() -> Optional[Union[Dict[str, str], List[str]]]:
+    return _get_config()['docker-compose'].get('build-args')
+
+
 def get_required_options() -> Iterable[str]:
     return _get_config().get('required-options', [])
 
@@ -124,7 +128,7 @@ def get_dc_data() -> dict:
     dc_config = _get_config()['docker-compose']
     data = {}
     for key, value in dc_config.items():
-        if key in ('tags', 'registries-by-tag', 'registry', 'project', 'network'):
+        if key in ('build-args', 'tags', 'registries-by-tag', 'registry', 'project', 'network'):
             continue
         data[key] = value
     return data
