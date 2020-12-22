@@ -30,16 +30,16 @@ def get_open_ports(container_name):
     """
     Retrieves the open ports on a container.
     :param container_name:
-    :return:
+    :return: The open ports as a dictionary of container ports to host ports
     """
     try:
         lines = subprocess.check_output(['docker', 'port', container_name]).splitlines()
-        ports = []
+        ports = {}
         for line in lines:
-            m = re.match(r'^\d+/tcp -> 0.0.0.0:(\d+)$', line.strip().decode('utf-8'))
+            m = re.match(r'^(\d+)/tcp -> 0.0.0.0:(\d+)$', line.strip().decode('utf-8'))
             if not m:
                 continue
-            ports.append(int(m.group(1)))
+            ports[int(m.group(1))] = int(m.group(2))
         return ports
     except subprocess.CalledProcessError as e:
         log.get_logger().warning(

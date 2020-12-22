@@ -220,13 +220,16 @@ def _wait_for_open_ports(service: Service) -> None:
             log.get_logger().debug(f'Waiting for ports to be listed on container {service.container_name}')
             time.sleep(0.1)
             continue
-        for port in open_ports:
-            log.get_logger().debug(f'Waiting for port {port} to be open on container {service.container_name}')
-            while not docker_utils.is_port_open(port):
+        for container_port, host_port in open_ports.items():
+            log.get_logger().debug(
+                f'Waiting for port {host_port} (container port {container_port}) '
+                f'to be open for container {service.container_name}'
+            )
+            while not docker_utils.is_port_open(host_port):
                 log.get_logger().debug(f'Port is not open yet, sleeping...')
                 time.sleep(0.1)
     for port, path in service.wait_for_ports.items():
-        docker_utils.check_port(service.container_name, port, path)
+        docker_utils.check_port(service.container_name, open_ports[port], path)
 
 
 def _run_checkout(args: argparse.Namespace):
@@ -368,9 +371,7 @@ def _run_docker_compose_with_projects(dev_projects: List[Project], docker_compos
 
             # Only include services in this repo's docker compose file and are not core services
             base_services = docker_utils.read_services_from_dc(DOCKER_COMPOSE_PATH)
-            print(f'base services 1: {base_services}')
             base_services = list(filter(lambda service: service not in core_service_names, base_services))
-            print(f'base services 2: {base_services}')
             base_commands.extend(base_services)
 
             log.get_logger().info(
