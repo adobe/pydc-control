@@ -454,6 +454,10 @@ def _run_dc_pull_config(args: argparse.Namespace):
     return _run_docker_compose_internal(args, ['pull', config_service.dc_name])
 
 
+def _run_dc_rm(args: argparse.Namespace):
+    return _run_docker_compose_internal(args, ['rm'])
+
+
 def _run_dc_stop(args: argparse.Namespace):
     return _run_docker_compose_internal(args, ['stop'])
 
@@ -655,6 +659,13 @@ def _parse_args(configure_parsers: Callable) -> argparse.Namespace:
     )
     pull_parser.set_defaults(
         func=_run_dc_pull,
+    )
+    rm_parser = subparsers.add_parser(
+        'rm',
+        help='Alias for the "dc rm" command'
+    )
+    rm_parser.set_defaults(
+        func=_run_dc_rm,
     )
     stop_parser = subparsers.add_parser(
         'stop',
