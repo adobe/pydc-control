@@ -1,10 +1,18 @@
+"""
+Copyright 2021 Adobe
+All Rights Reserved.
+
+NOTICE: Adobe permits you to use, modify, and distribute this file in accordance
+with the terms of the Adobe license agreement accompanying it.
+"""
 
 import contextlib
 import re
-import requests
 import socket
 import subprocess
 import time
+
+import requests
 import yaml
 
 from . import config, log
@@ -36,12 +44,12 @@ def get_open_ports(container_name):
         lines = subprocess.check_output(['docker', 'port', container_name]).splitlines()
         ports = {}
         for line in lines:
-            m = re.match(r'^(\d+)/tcp -> 0.0.0.0:(\d+)$', line.strip().decode('utf-8'))
-            if not m:
+            match = re.match(r'^(\d+)/tcp -> 0.0.0.0:(\d+)$', line.strip().decode('utf-8'))
+            if not match:
                 continue
-            ports[int(m.group(1))] = int(m.group(2))
+            ports[int(match.group(1))] = int(match.group(2))
         return ports
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         log.get_logger().warning(
             f'Could not find open ports for {container_name}, please ensure it is configured correctly'
         )
@@ -54,8 +62,8 @@ def is_port_open(port):
     :param port: The port as a number
     :return: True if open, false otherwise
     """
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(('127.0.0.1', port)) == 0
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        return sock.connect_ex(('127.0.0.1', port)) == 0
 
 
 def _is_path_responding(port: int, path: str) -> bool:
@@ -76,7 +84,7 @@ def check_port(container_name: str, port: int, path: str) -> None:
 
 
 def read_services_from_dc(docker_compose_path: str):
-    with open(docker_compose_path) as f:
-        data = yaml.safe_load(f)
+    with open(docker_compose_path, encoding='utf8') as fobj:
+        data = yaml.safe_load(fobj)
         services = data.get('services', {})
         return services.keys()

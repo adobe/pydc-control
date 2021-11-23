@@ -1,6 +1,15 @@
+"""
+Copyright 2021 Adobe
+All Rights Reserved.
+
+NOTICE: Adobe permits you to use, modify, and distribute this file in accordance
+with the terms of the Adobe license agreement accompanying it.
+"""
+
 import os
-import yaml
 from typing import Any, Dict, Iterable, List, Optional, Union
+
+import yaml
 
 from .exceptions import KnownException
 
@@ -11,13 +20,14 @@ CONFIG_FILE = 'config.yml'
 # Global vars
 BASE_DIR = None
 CONFIG_PATH = None
-CONFIG: Dict[str, Any] = None
+CONFIG: Dict[str, Any] = {}
 
 
 def set_base_dir(base_dir: str) -> None:
     """
     Sets the base dir for all further operations, this should be called first
     """
+    # pylint: disable=global-statement
     global BASE_DIR, CONFIG_PATH
     BASE_DIR = base_dir
     CONFIG_PATH = os.path.join(BASE_DIR, CONFIG_FILE)
@@ -28,14 +38,16 @@ def get_base_dir() -> Optional[str]:
 
 
 def _get_config() -> Dict[str, Any]:
+    # pylint: disable=global-statement
     global CONFIG
     if not CONFIG:
         if not os.path.exists(CONFIG_PATH):
             raise KnownException(f'Config file {CONFIG_PATH} does not exist, please copy and modify example')
-        with open(CONFIG_PATH, 'r') as config_file:
+        with open(CONFIG_PATH, 'r', encoding='utf8') as config_file:
             try:
                 CONFIG = yaml.safe_load(config_file)
-            except Exception as e:
+            except Exception:
+                # pylint: disable=raise-missing-from
                 raise KnownException(f'Config file {CONFIG_PATH} is not valid YAML, please copy and modify example')
         if not CONFIG:
             raise KnownException(f'Config file {CONFIG_PATH} is invalid, please copy and modify example')
@@ -46,8 +58,9 @@ def _get_config() -> Dict[str, Any]:
             raise KnownException(
                 f'Config file {CONFIG_PATH} has an invalid "prefixes" configuration, please see example'
             )
-        dc = CONFIG.get('docker-compose')
-        if not dc or not dc.get('network') or not dc.get('project') or not dc.get('registry'):
+        dc_config = CONFIG.get('docker-compose')
+        if not dc_config or not dc_config.get('network') or \
+                not dc_config.get('project') or not dc_config.get('registry'):
             raise KnownException(
                 f'Config file {CONFIG_PATH} has an invalid "docker-compose" configuration, please see example'
             )
@@ -58,6 +71,7 @@ def _get_config() -> Dict[str, Any]:
             )
         for project_name in projects:
             project_data = projects[project_name]
+            # pylint: disable=too-many-boolean-expressions
             if not project_data or not isinstance(project_data, dict) or 'directory' not in project_data or \
                     'repository' not in project_data or 'services' not in project_data or \
                     not isinstance(project_data.get('services'), list):

@@ -1,3 +1,10 @@
+"""
+Copyright 2021 Adobe
+All Rights Reserved.
+
+NOTICE: Adobe permits you to use, modify, and distribute this file in accordance
+with the terms of the Adobe license agreement accompanying it.
+"""
 
 import logging
 
@@ -6,6 +13,7 @@ _LOGGER: logging.Logger = None
 
 
 def init_logger(debug: bool) -> None:
+    # pylint: disable=global-statement
     global _LOGGER
 
     log_level = logging.INFO

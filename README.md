@@ -256,8 +256,18 @@ The full image reference is of the form `<registry><path>:<tag>`.
 
 In order to use a template instead of a direct `docker-compose.yml` file in a project,
 simply create a file named `docker-compose-template.yml` and then make sure that
-`docker-compose.yml` file is ignored by your VCS. This file is processed via Jinja
-and has several variables available to it.
+`docker-compose.yml` file is ignored by your VCS since it will be regenerated on each
+run of the control script. The template file is processed via Jinja and has several
+variables available to it such as:
+
+* 
+        'dev_project_names': dev_project_names,
+        'enabled_services': enabled_services,
+        'tag': tag,
+        'registry': registry,
+        'network': config.get_dc_network(),
+        'core_prefix': config.get_service_prefix('core'),
+        'service_prefix': config.get_service_prefix(),
 
 ### Making services enabled/disabled
 

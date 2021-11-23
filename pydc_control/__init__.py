@@ -1,14 +1,20 @@
-#!/usr/bin/env python3
+"""
+Copyright 2021 Adobe
+All Rights Reserved.
+
+NOTICE: Adobe permits you to use, modify, and distribute this file in accordance
+with the terms of the Adobe license agreement accompanying it.
+"""
 
 import argparse
-import jinja2
 import os
 import signal
 import subprocess
 import time
-import yaml
-
 from typing import Callable, Dict, List, Optional, Union
+
+import jinja2
+import yaml
 
 from . import config, docker_utils, log
 from .exceptions import KnownException
@@ -29,6 +35,7 @@ ENV_PATH: str = None
 
 
 def _init_vars(base_dir):
+    # pylint: disable=global-statement
     global BASE_DIR, CONFIG_PATH, DOCKER_COMPOSE_PATH, ENV_PATH
     BASE_DIR = base_dir
     CONFIG_PATH = os.path.join(base_dir, CONFIG_FILE)
@@ -63,16 +70,18 @@ def _check_required_options():
         raise KnownException(f'Please create {ENV_PATH} containing env vars for project config, '
                              f'this will be used to configure each project. The {ENV_FILE}.example '
                              'file may be used as a template')
-    with open(ENV_PATH, 'r') as f:
-        contents = f.read()
-        required_options = config.get_required_options()
-        for option in required_options:
-            if option not in contents:
-                raise KnownException(f'The {ENV_PATH} file must include the {option} option')
+    with open(ENV_PATH, 'r', encoding='utf8') as fobj:
+        contents = fobj.read()
+    required_options = config.get_required_options()
+    for option in required_options:
+        if option not in contents:
+            raise KnownException(f'The {ENV_PATH} file must include the {option} option')
 
 
 def _set_dynamic_options(enabled_status_by_service: Dict[Service, bool]) -> None:
-    with open(ENV_PATH, 'r') as fobj:
+    # pylint: disable=too-many-branches
+
+    with open(ENV_PATH, 'r', encoding='utf8') as fobj:
         env_file_contents = fobj.read()
     new_contents = []
     lines_changed = False
@@ -87,12 +96,11 @@ def _set_dynamic_options(enabled_status_by_service: Dict[Service, bool]) -> None
 
     for line in env_file_contents.splitlines():
         option_considered = False
-        for option in services_by_dynamic_option:
+        for option, service in services_by_dynamic_option.items():
             if option not in line:
                 continue
             option_considered = True
             dynamic_options_seen[option] = True
-            service = services_by_dynamic_option[option]
             if enabled_status_by_service.get(service, True):
                 value = service.dynamic_options[option].get('enabled')
             else:
@@ -112,9 +120,8 @@ def _set_dynamic_options(enabled_status_by_service: Dict[Service, bool]) -> None
         if not option_considered:
             new_contents.append(line)
 
-    for option in services_by_dynamic_option:
+    for option, service in services_by_dynamic_option.items():
         if not dynamic_options_seen[option]:
-            service = services_by_dynamic_option[option]
             if enabled_status_by_service.get(service, True):
                 value = service.dynamic_options[option].get('enabled')
             else:
@@ -125,7 +132,7 @@ def _set_dynamic_options(enabled_status_by_service: Dict[Service, bool]) -> None
                 lines_changed = True
 
     if lines_changed:
-        with open(ENV_PATH, 'w') as fobj:
+        with open(ENV_PATH, 'w', encoding='utf8') as fobj:
             fobj.write('\n'.join(new_contents))
 
 
@@ -149,16 +156,21 @@ def _link_config(projects: List[Project]):
 
 def _render_docker_compose_file(base_dir, template_config):
     if not os.path.exists(os.path.join(base_dir, DOCKER_COMPOSE_TEMPLATE)):
-        log.get_logger().debug(f'No {DOCKER_COMPOSE_TEMPLATE} detected in the {base_dir} directory, skipping generation')
+        log.get_logger().debug(
+            f'No {DOCKER_COMPOSE_TEMPLATE} detected in the {base_dir} directory, skipping generation'
+        )
         return
     try:
         env = jinja2.Environment(loader=jinja2.FileSystemLoader(base_dir))
         template = env.get_template(DOCKER_COMPOSE_TEMPLATE)
         output = template.render(**template_config)
-        with open(os.path.join(base_dir, DOCKER_COMPOSE_FILE), 'w') as f:
-            f.write(output)
-    except jinja2.exceptions.TemplateSyntaxError as e:
-        raise KnownException(f'Could not render {base_dir}/{DOCKER_COMPOSE_TEMPLATE}: {e.message} on line {e.lineno}')
+        with open(os.path.join(base_dir, DOCKER_COMPOSE_FILE), 'w', encoding='utf8') as fobj:
+            fobj.write(output)
+    except jinja2.exceptions.TemplateSyntaxError as exc:
+        # pylint: disable=raise-missing-from
+        raise KnownException(
+            f'Could not render {base_dir}/{DOCKER_COMPOSE_TEMPLATE}: {exc.message} on line {exc.lineno}'
+        )
 
 
 def _generate_docker_compose(dev_projects: List[Project], tag: str, enabled_status_by_service: Dict[Service, bool]):
@@ -192,8 +204,8 @@ def _generate_docker_compose(dev_projects: List[Project], tag: str, enabled_stat
         'services': services,
     }
     docker_compose_data.update(config.get_dc_data())
-    with open(os.path.join(BASE_DIR, DOCKER_COMPOSE_FILE), 'w') as f:
-        yaml.safe_dump(docker_compose_data, f)
+    with open(os.path.join(BASE_DIR, DOCKER_COMPOSE_FILE), 'w', encoding='utf8') as fobj:
+        yaml.safe_dump(docker_compose_data, fobj)
 
     enabled_services = {}
     for service, status in enabled_status_by_service.items():
@@ -226,19 +238,20 @@ def _wait_for_open_ports(service: Service) -> None:
                 f'to be open for container {service.container_name}'
             )
             while not docker_utils.is_port_open(host_port):
-                log.get_logger().debug(f'Port is not open yet, sleeping...')
+                log.get_logger().debug('Port is not open yet, sleeping...')
                 time.sleep(0.1)
     for port, path in service.wait_for_ports.items():
         docker_utils.check_port(service.container_name, open_ports[port], path)
 
 
 def _run_checkout(args: argparse.Namespace):
+    # pylint: disable=too-many-branches
     if args.all_projects or not args.dev_project_names:
         projects = Project.find_all()
     else:
         projects = _get_dev_projects(args)
     if len(projects) == 0:
-        raise KnownException(f'There are no projects available, please set projects')
+        raise KnownException('There are no projects available, please set projects')
 
     parent_dir = os.path.realpath(os.path.join(BASE_DIR, '..'))
     log.get_logger().info(f'Checking out {len(projects)} projects to {parent_dir}')
@@ -266,26 +279,27 @@ def _run_checkout(args: argparse.Namespace):
         if not result and len(args.extra_remotes) > 0:
             log.get_logger().debug('Adding any remotes specified if not already added')
             base_git_path = project.repository.split(':')[0]
-            for r in args.extra_remotes:
-                org = name = r[0]
-                if len(r) == 2:
-                    name = r[1] # an optional name to be specified for the remote
+            for remote in args.extra_remotes:
+                org = name = remote[0]
+                if len(remote) == 2:
+                    # an optional name to be specified for the remote
+                    name = remote[1]
 
                 # check if remote exists
                 command = ['git', 'ls-remote', '-q', '--exit-code', name]
                 # ignore stdout as the check can be misleading if this is the first time we are adding a repo
-                with open(os.devnull, 'w') as fnull:
+                with open(os.devnull, 'wb') as fnull:
                     exit_code = subprocess.call(command, cwd=project.path, stdout=fnull, stderr=subprocess.STDOUT)
                 if exit_code == 0:
                     log.get_logger().debug(f'Remote {name} already exists in project {project.name}')
                     continue
                 log.get_logger().info(f'Trying to add remote {name} at '
                                       f'{base_git_path}:{org}/{project.directory}.git in project {project.name}')
-                command = [ 'git', 'remote', 'add', name, f'{base_git_path}:{org}/{project.directory}.git' ]
+                command = ['git', 'remote', 'add', name, f'{base_git_path}:{org}/{project.directory}.git']
                 exit_code = subprocess.call(command, cwd=project.path)
 
                 if exit_code:
-                    log.get_logger().warning(f'There was a problem adding remote {r} in project {project.name}')
+                    log.get_logger().warning(f'There was a problem adding remote {remote} in project {project.name}')
 
     return result
 
@@ -296,7 +310,7 @@ def _get_repo_status(args: argparse.Namespace):
     else:
         projects = _get_dev_projects(args)
     if len(projects) == 0:
-        raise KnownException(f'There are no projects available, please set projects')
+        raise KnownException('There are no projects available, please set projects')
 
     log.get_logger().info(f'Getting the git status for {len(projects)} projects')
 
@@ -448,7 +462,7 @@ def _run_dc_pull(args: argparse.Namespace):
 def _run_dc_pull_config(args: argparse.Namespace):
     config_service = Service.find_one(config.get_target_service('config'))
     if not config_service:
-        raise KnownException(f'A config target service is not defined, please define one to pull configuration')
+        raise KnownException('A config target service is not defined, please define one to pull configuration')
     if (config_service.disable and args.disable_config) or (config_service.enable and not args.enable_config):
         raise KnownException('Cannot pull configuration when using the real config service')
     return _run_docker_compose_internal(args, ['pull', config_service.dc_name])
@@ -480,6 +494,7 @@ def _get_dev_projects(args: argparse.Namespace) -> List[Project]:
 
 
 def _get_print_help_func(parser):
+    # pylint: disable=unused-argument
     def print_help(args: argparse.Namespace):
         parser.print_help()
         return os.EX_OK
@@ -492,6 +507,8 @@ def _get_config_service_target() -> Optional[Service]:
 
 
 def _parse_args(configure_parsers: Callable) -> argparse.Namespace:
+    # pylint: disable=too-many-locals
+
     # Get all projects defined in the configuration
     projects = Project.find_all()
 
@@ -701,7 +718,7 @@ def _parse_args(configure_parsers: Callable) -> argparse.Namespace:
     if config_service_target:
         pull_config_parser = subparsers.add_parser(
             'pull-config',
-            help=f'Alias for the "dc pull" command'
+            help='Alias for the "dc pull" command'
         )
         pull_config_parser.set_defaults(
             func=_run_dc_pull_config,
@@ -721,14 +738,14 @@ def call_commands(commands):
     :param commands: The commands to run as arguments to subprocess.Popen
     :return: The exit code of the commands
     """
-    p = subprocess.Popen(commands)
-    try:
-        exit_code = p.wait()
-    except KeyboardInterrupt:
-        # When a keyboard interrupt is sent, pass it onto the child and then still wait
-        # If this occurs twice, the second will abort this process
-        p.send_signal(signal.SIGINT)
-        exit_code = p.wait()
+    with subprocess.Popen(commands) as process:
+        try:
+            exit_code = process.wait()
+        except KeyboardInterrupt:
+            # When a keyboard interrupt is sent, pass it onto the child and then still wait
+            # If this occurs twice, the second will abort this process
+            process.send_signal(signal.SIGINT)
+            exit_code = process.wait()
     return exit_code
 
 
@@ -751,8 +768,8 @@ def run(base_dir, configure_parsers: Callable = None):
 
     # Configure extra remotes
     if 'extra_remotes' in args.__dict__ and len(args.extra_remotes) > 0:
-        for r in args.extra_remotes:
-            if len(r) > 2 or len(r) < 1:
+        for remote in args.extra_remotes:
+            if len(remote) > 2 or len(remote) < 1:
                 log.get_logger().error(
                     'extra remotes parameters must take either 1 or 2 parameters for each specification.'
                 )
@@ -766,6 +783,7 @@ def run(base_dir, configure_parsers: Callable = None):
 
     # Make sure the config service is not disabled at the same time it is being developed
     config_service_target = _get_config_service_target()
+    # pylint: disable=too-many-boolean-expressions
     if config_service_target and config_service_target.project_name in args.dev_project_names and (
             (config_service_target.enable and not getattr(args, f'enable_{config_service_target.name}')) or
             (config_service_target.disable and getattr(args, f'disable_{config_service_target.name}'))
@@ -778,15 +796,11 @@ def run(base_dir, configure_parsers: Callable = None):
 
     try:
         return args.func(args)
-    except KnownException as e:
-        log.get_logger().error(str(e))
+    except KnownException as exc:
+        log.get_logger().error(str(exc))
         return 2
-    except Exception as e:
-        log.get_logger().error(f'Encountered an unexpected failure ({e.__class__}): {e}')
+    except Exception as exc:  # pylint:disable=broad-except
+        log.get_logger().error(f'Encountered an unexpected failure ({exc.__class__}): {exc}')
         if args.debug:
             raise
         return 1
-
-
-if __name__ == '__main__':
-    run(os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))

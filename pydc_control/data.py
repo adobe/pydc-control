@@ -1,3 +1,10 @@
+"""
+Copyright 2021 Adobe
+All Rights Reserved.
+
+NOTICE: Adobe permits you to use, modify, and distribute this file in accordance
+with the terms of the Adobe license agreement accompanying it.
+"""
 
 import os
 from typing import Any, Dict, List, Optional
@@ -43,15 +50,15 @@ class Service:
 
     @property
     def enable(self) -> bool:
-        return not not self.data.get('enable', False)
+        return bool(self.data.get('enable', False))
 
     @property
     def disable(self) -> bool:
-        return not not self.data.get('disable', False)
+        return bool(self.data.get('disable', False))
 
     @property
     def core(self) -> bool:
-        return not not self.data.get('core', False)
+        return bool(self.data.get('core', False))
 
     @property
     def dynamic_options(self) -> Dict[str, Dict[str, Optional[str]]]:
@@ -77,7 +84,6 @@ class Service:
                 # All other values are a pass-through to docker-compose
                 data[key] = value
         return data
-
 
     @classmethod
     def find_all(cls, core=None) -> List['Service']:
@@ -136,6 +142,7 @@ class Project:
 
     @classmethod
     def find_all(cls) -> List['Project']:
+        # pylint: disable=global-statement
         global _PROJECTS
         if not _PROJECTS:
             project_config = get_project_config()
@@ -148,4 +155,3 @@ class Project:
             if project.name == name:
                 return project
         return None
-
