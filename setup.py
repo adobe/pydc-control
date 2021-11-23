@@ -2,7 +2,7 @@ from os.path import join, dirname
 from setuptools import setup, find_packages
 
 
-with open(join(dirname(__file__), 'pydc-control/VERSION')) as fobj:
+with open(join(dirname(__file__), 'pydc_control/VERSION')) as fobj:
     version = fobj.read().strip()
 with open(join(dirname(__file__), 'README.md')) as fobj:
     long_description = fobj.read().strip()
