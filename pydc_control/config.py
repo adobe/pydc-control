@@ -90,7 +90,7 @@ def get_target_service(target_name: str) -> str:
     :return:
     """
     config = _get_config()
-    if not config['target-services'] or target_name not in config['target-services']:
+    if not config.get('target-services') or target_name not in config['target-services']:
         raise KnownException(f'Target service {target_name} is not defined, please define "target-services"')
     return config['target-services'][target_name]
 
