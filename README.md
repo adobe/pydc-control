@@ -349,10 +349,10 @@ While it may seem like duplicated code/configuration, the docker compose files i
 project and the configuration file in the control project serve different purposes and
 often look different:
 
-* The configuration file in the control project should use a deployed (production-like)
-  docker image and configuration for the project. The code for each project is static
-  for is promoted or deployed to certain environments.
+* The configuration file in the control project should use a deployed (production or stage-like)
+  docker image and configuration for the project. The code for each project is not dynamically
+  modified and is usually promoted/deployed to environments outside of pydc-control.
 * The docker compose file in the individual (developed) project should use a development
   build of the docker image with, ideally, application files and configuration mounted
   dynamically into the container so that development is seamless and immediate.
-  Live-reloading should be used when available when developing on a project. 
+  Live-reloading should be used when available to speed development of a project.
