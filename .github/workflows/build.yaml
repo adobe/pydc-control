@@ -28,8 +28,10 @@ jobs:
         pip install -r test_requirements.txt
     - name: Test with pycodestyle
       run: pycodestyle pydc_control
+    - name: Test with pylint
+      run: pylint pydc_control
     - name: Test with pytest
-      run: pytest --pylint --junitxml=test-reports/test-results.xml
+      run: pytest --junitxml=test-reports/test-results.xml
     - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action/composite@v1
       if: github.event_name == 'push' && always()

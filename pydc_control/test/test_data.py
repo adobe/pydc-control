@@ -5,10 +5,12 @@ All Rights Reserved.
 NOTICE: Adobe permits you to use, modify, and distribute this file in accordance
 with the terms of the Adobe license agreement accompanying it.
 """
+# pylint: disable=protected-access
 
 import os
-import pytest
 import tempfile
+
+import pytest
 import yaml
 
 from pydc_control import data, config, exceptions
@@ -28,7 +30,7 @@ def fixture_cleanup():
     config.CONFIG = None
 
 
-def _write_config(temp_dir, data):
+def _write_config(temp_dir: str, write_data: dict) -> None:
     config_data = {
         'prefixes': {
             'service': 'mynamespace_',
@@ -41,8 +43,8 @@ def _write_config(temp_dir, data):
             'registry': 'registry1',
         },
     }
-    config_data.update(data)
-    with open(os.path.join(temp_dir, 'config.yml'), 'w') as fobj:
+    config_data.update(write_data)
+    with open(os.path.join(temp_dir, 'config.yml'), 'w', encoding='utf8') as fobj:
         yaml.safe_dump(config_data, fobj)
 
 
