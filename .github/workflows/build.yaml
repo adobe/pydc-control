@@ -4,8 +4,7 @@ on:
   - pull_request
 jobs:
   test:
-    #TODO Remove bluesliverx repo when moved to adobe
-    if: github.repository == 'adobe/pydc-control' || github.repository == 'bluesliverx/pydc-control'
+    if: github.repository == 'adobe/pydc-control'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -39,8 +38,7 @@ jobs:
         files: test-reports/test-results.xml
         check_name: "Test Results ${{ matrix.python-version }}"
   publish:
-    #TODO Remove bluesliverx repo when moved to adobe
-    if: github.repository == 'adobe/pydc-control' || github.repository == 'bluesliverx/pydc-control'
+    if: github.repository == 'adobe/pydc-control'
     runs-on: ubuntu-latest
     needs: test
     steps:
