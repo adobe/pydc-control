@@ -260,14 +260,13 @@ simply create a file named `docker-compose-template.yml` and then make sure that
 run of the control script. The template file is processed via Jinja and has several
 variables available to it such as:
 
-* 
-        'dev_project_names': dev_project_names,
-        'enabled_services': enabled_services,
-        'tag': tag,
-        'registry': registry,
-        'network': config.get_dc_network(),
-        'core_prefix': config.get_service_prefix('core'),
-        'service_prefix': config.get_service_prefix(),
+* `dev_project_names` - The names of the project currently under development
+* `enabled_services` - The services that are marked as enabled and are currently enabled
+* `tag` - The docker tag selected
+* `registry` - The docker registry from the config file
+* `network` - The docker network from the config file
+* `core_prefix` - The prefix to use for core containers
+* `service_prefix` - The prefix to use for service containers
 
 ### Making services enabled/disabled
 
