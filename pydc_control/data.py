@@ -102,7 +102,10 @@ class Service:
 
     @classmethod
     def find_config(cls) -> Optional['Service']:
-        return cls.find_one(get_target_service('config'))
+        target_service = get_target_service('config', optional=True)
+        if not target_service:
+            return None
+        return cls.find_one(target_service)
 
     @classmethod
     def find_enabled(cls) -> List['Service']:

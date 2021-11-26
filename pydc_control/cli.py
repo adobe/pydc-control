@@ -32,7 +32,7 @@ def _parse_args(configure_parsers: Callable) -> argparse.Namespace:
 
     # Parse arguments
     parser = argparse.ArgumentParser(
-        description='Runs setup for Gauntlet services through a Jinja template and docker-compose.',
+        description='Coordinates running projects and services through docker compose.',
     )
     parser.add_argument(
         '-p', '--projects-dev',
@@ -116,7 +116,7 @@ def _parse_args(configure_parsers: Callable) -> argparse.Namespace:
     repo_status_parser = subparsers.add_parser(
         'repo-status',
         aliases=['rs'],
-        help='gets the status of the repos associated with gauntlet-control'
+        help='gets the status of the repos associated with this control script'
     )
     repo_status_parser.set_defaults(
         func=commands.get_repo_status,

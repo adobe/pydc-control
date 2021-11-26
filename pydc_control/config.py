@@ -108,14 +108,17 @@ def get_service_prefix(service_type: str = 'service') -> str:
     return _get_config()['prefixes'].get(service_type)
 
 
-def get_target_service(target_name: str) -> str:
+def get_target_service(target_name: str, optional: bool = False) -> Optional[str]:
     """
     Gets a target service container name from the config.
     :param target_name: The target name
+    :param optional: If true, no exception will be raised if the target service is not present or configured
     :return:
     """
     config = _get_config()
     if not config.get('target-services') or target_name not in config['target-services']:
+        if optional:
+            return None
         raise KnownException(f'Target service {target_name} is not defined, please define "target-services"')
     return config['target-services'][target_name]
 

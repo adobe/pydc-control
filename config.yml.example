@@ -82,7 +82,7 @@ projects:
       #  # The name of the environment variable to set or to remove
       #  MYVAR2:
       #    # The value given to the variable when the service is enabled
-      #    enabled: http://gauntlethost:8000
+      #    enabled: http://myhost:8000
       #    # The value given to the variable when the service is disabled, an empty string will remove the variable
       #    # from the docker-compose.env file
       #    disabled: ''

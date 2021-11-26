@@ -169,7 +169,7 @@ def run_dc_pull(args: argparse.Namespace):
 
 
 def run_dc_pull_config(args: argparse.Namespace):
-    config_service = Service.find_one(config.get_target_service('config'))
+    config_service = Service.find_config()
     if not config_service:
         raise KnownException('A config target service is not defined, please define one to pull configuration')
     if (config_service.disable and args.disable_config) or (config_service.enable and not args.enable_config):
