@@ -13,6 +13,8 @@ from . import cli, config, docker_utils, log
 from .exceptions import KnownException
 from .data import Project, Service
 
+from .commands import call_commands
+
 
 def _detect_current_project(dev_project_names: List[str]) -> None:
     dir_name = os.path.basename(os.getcwd())
