@@ -14,6 +14,10 @@ import pytest
 import yaml
 
 from pydc_control import data, config, exceptions
+from . import fixture_cleanup
+
+
+_ = fixture_cleanup
 
 
 @pytest.fixture(name='temp_dir')
@@ -21,13 +25,6 @@ def fixture_temp_dir():
     with tempfile.TemporaryDirectory(prefix='pydc-control-test-') as temp_dir:
         config.initialize(temp_dir)
         yield temp_dir
-
-
-@pytest.fixture(autouse=True)
-def fixture_cleanup():
-    yield
-    data._PROJECTS = None
-    config.CONFIG = None
 
 
 def _write_config(temp_dir: str, write_data: dict) -> None:
