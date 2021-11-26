@@ -1,0 +1,283 @@
+"""
+Copyright 2021 Adobe
+All Rights Reserved.
+
+NOTICE: Adobe permits you to use, modify, and distribute this file in accordance
+with the terms of the Adobe license agreement accompanying it.
+"""
+
+import argparse
+import os
+from typing import Callable
+
+from . import commands, log
+from .data import Project, Service
+
+
+def _get_print_help_func(parser):
+    # pylint: disable=unused-argument
+    def print_help(args: argparse.Namespace):
+        parser.print_help()
+        return os.EX_OK
+
+    return print_help
+
+
+def parse_args(configure_parsers: Callable) -> argparse.Namespace:
+    # pylint: disable=too-many-locals
+
+    # Get all projects defined in the configuration
+    projects = Project.find_all()
+
+    # Parse arguments
+    parser = argparse.ArgumentParser(
+        description='Runs setup for Gauntlet services through a Jinja template and docker-compose.',
+    )
+    parser.add_argument(
+        '-p', '--projects-dev',
+        action='append',
+        default=[],
+        dest='dev_project_names',
+        # Only projects with actual directories can be developed
+        choices=list(project.name for project in projects if project.directory),
+        help="The projects to develop locally, does not pull upstream images for them.",
+    )
+    parser.add_argument(
+        "-t", "--tag",
+        dest="tag",
+        default='latest',
+        choices=['latest', 'dev', 'stage', 'prod'],
+        help="The docker tag to use for upstream images, defaults to latest (dev is equivalent to latest).",
+    )
+    parser.add_argument(
+        "-d", "--debug",
+        dest="debug",
+        action="store_true",
+        help="Enable debug output.",
+    )
+    parser.set_defaults(
+        func=_get_print_help_func(parser),
+    )
+
+    # Build arguments for enabled/disabled service dynamically
+    for service in Service.find_enabled():
+        parser.add_argument(
+            f"--enable-{service.name.replace('_', '-')}",
+            dest=f"enable_{service.name}",
+            action="store_true",
+            help=f"Enables the optional {service.name} service from the {service.project_name} "
+                 f"project, disabled by default",
+        )
+    for service in Service.find_disabled():
+        parser.add_argument(
+            f"--disable-{service.name.replace('_', '-')}",
+            dest=f"disable_{service.name}",
+            action="store_true",
+            help=f"Disables the optional {service.name} service from the {service.project_name} "
+                 f"project, enabled by default",
+        )
+
+    subparsers = parser.add_subparsers(title='Commands', help='commands')
+
+    # Help shortcut
+    # help_parser = subparsers.add_parser(
+    #     'help',
+    #     aliases=['h'],
+    #     help='Prints help for commands and usages'
+    # )
+
+    # Checkout
+    checkout_parser = subparsers.add_parser(
+        'checkout',
+        aliases=['co'],
+        help='Clones and/or updates repositories for all specified projects'
+    )
+    checkout_parser.set_defaults(
+        func=commands.run_checkout,
+    )
+    checkout_parser.add_argument(
+        "-a", "--all-projects",
+        dest="all_projects",
+        action="store_true",
+        help="Checkout/clone all projects.",
+    )
+    checkout_parser.add_argument(
+        '-e', '--extra-remote',
+        dest='extra_remotes',
+        action='append',
+        nargs='*',
+        default=[],
+        help="Add a remote when cloning/checking out. Each flag can take 1-2 params, 1 param should be the space "
+             "the remote exists in github. If a 2nd param is specified it is an optional name for the remote."
+    )
+
+    # Repo Status
+    repo_status_parser = subparsers.add_parser(
+        'repo-status',
+        aliases=['rs'],
+        help='gets the status of the repos associated with gauntlet-control'
+    )
+    repo_status_parser.set_defaults(
+        func=commands.get_repo_status,
+    )
+    repo_status_parser.add_argument(
+        "-a", "--all-projects",
+        dest="all_projects",
+        action="store_true",
+        help="Get the status of all projects.",
+    )
+
+    # Docker Status
+    # Init
+    init_parser = subparsers.add_parser(
+        'init',
+        help='Generates docker-compose templates and copies configuration, but does not run any commands'
+    )
+    init_parser.set_defaults(
+        func=commands.run_dc_init,
+    )
+
+    # Docker compose
+    dc_parser = subparsers.add_parser(
+        'docker-compose',
+        aliases=['dc'],
+        help='Generates docker-compose templates, copies configuration, and runs any docker-compose command'
+    )
+    dc_parser.set_defaults(
+        func=commands.run_docker_compose,
+    )
+    dc_parser.add_argument(
+        'docker_compose_args',
+        nargs='*',
+        help="The arguments to pass directly to docker-compose.",
+    )
+
+    # Docker compose aliases
+    build_parser = subparsers.add_parser(
+        'build',
+        help='Alias for the "dc build" command'
+    )
+    build_parser.add_argument(
+        "--no-cache",
+        dest="no_cache",
+        action="store_true",
+        help="Do not use cache when building the image.",
+    )
+    build_parser.add_argument(
+        "-a", "--all-projects",
+        dest="all_projects",
+        action="store_true",
+        help="Builds all projects instead of just those specified or by using the current directory,"
+             "this is assumed if no projects are specified.",
+    )
+    build_parser.set_defaults(
+        func=commands.run_dc_build,
+    )
+    config_parser = subparsers.add_parser(
+        'config',
+        help='Alias for the "dc config" command'
+    )
+    config_parser.set_defaults(
+        func=commands.run_dc_config,
+    )
+    down_parser = subparsers.add_parser(
+        'down',
+        help='Alias for the "dc down" command'
+    )
+    down_parser.set_defaults(
+        func=commands.run_dc_down,
+    )
+    pull_parser = subparsers.add_parser(
+        'pull',
+        help='Alias for the "dc pull" command'
+    )
+    pull_parser.set_defaults(
+        func=commands.run_dc_pull,
+    )
+    rm_parser = subparsers.add_parser(
+        'rm',
+        help='Alias for the "dc rm" command'
+    )
+    rm_parser.set_defaults(
+        func=commands.run_dc_rm,
+    )
+    stop_parser = subparsers.add_parser(
+        'stop',
+        help='Alias for the "dc stop" command'
+    )
+    stop_parser.set_defaults(
+        func=commands.run_dc_stop,
+    )
+    up_parser = subparsers.add_parser(
+        'up',
+        help='Alias for the "dc up" command'
+    )
+    up_parser.set_defaults(
+        func=commands.run_dc_up,
+    )
+    up_detach_parser = subparsers.add_parser(
+        'up-detach',
+        help='Alias for the "dc up --detach" command'
+    )
+    up_detach_parser.set_defaults(
+        func=commands.run_dc_up_detach,
+    )
+    up_recreate_parser = subparsers.add_parser(
+        'up-recreate',
+        help='Alias for the "dc up --force-recreate" command'
+    )
+    up_recreate_parser.set_defaults(
+        func=commands.run_dc_up_recreate,
+    )
+
+    # Do not allow to pull configuration unless there is a project for config
+    config_service_target = Service.find_config()
+    if config_service_target:
+        pull_config_parser = subparsers.add_parser(
+            'pull-config',
+            help='Alias for the "dc pull" command'
+        )
+        pull_config_parser.set_defaults(
+            func=commands.run_dc_pull_config,
+        )
+
+    if configure_parsers:
+        configure_parsers(parser, subparsers)
+
+    # Parse arguments
+    return parser.parse_args()
+
+
+def validate_args(args: argparse.Namespace) -> int:
+    """
+    Validates command line arguments for situations that are too complex for argparse.
+    When this is called, all developed projects must already be added.
+    :param args: the CLI arguments parsed by argparse
+    :return: the exit code (or 0 on successful validation)
+    """
+    # Configure extra remotes
+    if 'extra_remotes' in args.__dict__ and len(args.extra_remotes) > 0:
+        for remote in args.extra_remotes:
+            if len(remote) > 2 or len(remote) < 1:
+                log.get_logger().error(
+                    'extra remotes parameters must take either 1 or 2 parameters for each specification.'
+                )
+                log.get_logger().error('example : -e origin bob')
+                log.get_logger().error(
+                    '      where origin is the remote name and bob is the space the repo is forked in'
+                )
+                return os.EX_USAGE
+
+    # Make sure the config service is not disabled at the same time it is being developed
+    config_service_target = Service.find_config()
+    # pylint: disable=too-many-boolean-expressions
+    if config_service_target and config_service_target.project_name in args.dev_project_names and (
+            (config_service_target.enable and not getattr(args, f'enable_{config_service_target.name}')) or
+            (config_service_target.disable and getattr(args, f'disable_{config_service_target.name}'))
+    ):
+        log.get_logger().error(
+            f'To use the config service, you must not be developing on the '
+            f'{config_service_target.project_name} project.'
+        )
+        return os.EX_USAGE
+    return os.EX_OK

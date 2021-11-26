@@ -7,13 +7,11 @@ with the terms of the Adobe license agreement accompanying it.
 """
 
 import os
+from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
-from .config import get_base_dir, get_project_config, get_service_prefix
+from .config import get_base_dir, get_project_config, get_service_prefix, get_target_service
 from .exceptions import KnownException
-
-
-_PROJECTS = None
 
 
 class Service:
@@ -103,6 +101,10 @@ class Service:
         return None
 
     @classmethod
+    def find_config(cls) -> Optional['Service']:
+        return cls.find_one(get_target_service('config'))
+
+    @classmethod
     def find_enabled(cls) -> List['Service']:
         services = []
         for project in Project.find_all():
@@ -141,13 +143,10 @@ class Project:
         return os.path.realpath(os.path.join(get_base_dir(), '..', self.directory))
 
     @classmethod
+    @lru_cache()
     def find_all(cls) -> List['Project']:
-        # pylint: disable=global-statement
-        global _PROJECTS
-        if not _PROJECTS:
-            project_config = get_project_config()
-            _PROJECTS = list(Project(name, data) for name, data in project_config.items())
-        return _PROJECTS
+        project_config = get_project_config()
+        return list(Project(name, data) for name, data in project_config.items())
 
     @classmethod
     def find_one(cls, name: str) -> Optional['Project']:

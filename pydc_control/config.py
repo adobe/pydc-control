@@ -7,6 +7,7 @@ with the terms of the Adobe license agreement accompanying it.
 """
 
 import os
+from functools import lru_cache
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 import yaml
@@ -16,76 +17,86 @@ from .exceptions import KnownException
 
 # Static vars
 CONFIG_FILE = 'config.yml'
+DOCKER_COMPOSE_TEMPLATE = 'docker-compose-template.yml'
+DOCKER_COMPOSE_FILE = 'docker-compose.yml'
+ENV_FILE = 'docker-compose.env'
 
 # Global vars
-BASE_DIR = None
-CONFIG_PATH = None
-CONFIG: Dict[str, Any] = {}
+_BASE_DIR = os.path.dirname(__file__)
 
 
-def set_base_dir(base_dir: str) -> None:
+def initialize(base_dir: str) -> None:
     """
     Sets the base dir for all further operations, this should be called first
     """
     # pylint: disable=global-statement
-    global BASE_DIR, CONFIG_PATH
-    BASE_DIR = base_dir
-    CONFIG_PATH = os.path.join(BASE_DIR, CONFIG_FILE)
+    global _BASE_DIR
+    _BASE_DIR = base_dir
 
 
-def get_base_dir() -> Optional[str]:
-    return BASE_DIR
+def get_base_dir() -> str:
+    return _BASE_DIR
 
 
+# The following methods are cached so that we only retrieve/validate them once (config cannot be changed mid-run)
+@lru_cache()
+def get_env_file_path() -> str:
+    return os.path.join(_BASE_DIR, ENV_FILE)
+
+
+@lru_cache()
+def get_docker_compose_path() -> str:
+    return os.path.join(_BASE_DIR, DOCKER_COMPOSE_FILE)
+
+
+@lru_cache()
 def _get_config() -> Dict[str, Any]:
-    # pylint: disable=global-statement
-    global CONFIG
-    if not CONFIG:
-        if not os.path.exists(CONFIG_PATH):
-            raise KnownException(f'Config file {CONFIG_PATH} does not exist, please copy and modify example')
-        with open(CONFIG_PATH, 'r', encoding='utf8') as config_file:
-            try:
-                CONFIG = yaml.safe_load(config_file)
-            except Exception:
-                # pylint: disable=raise-missing-from
-                raise KnownException(f'Config file {CONFIG_PATH} is not valid YAML, please copy and modify example')
-        if not CONFIG:
-            raise KnownException(f'Config file {CONFIG_PATH} is invalid, please copy and modify example')
+    config_path = os.path.join(_BASE_DIR, CONFIG_FILE)
+    if not os.path.exists(config_path):
+        raise KnownException(f'Config file {config_path} does not exist, please copy and modify example')
+    with open(config_path, 'r', encoding='utf8') as config_file:
+        try:
+            config = yaml.safe_load(config_file)
+        except Exception:
+            # pylint: disable=raise-missing-from
+            raise KnownException(f'Config file {config_path} is not valid YAML, please copy and modify example')
+    if not config:
+        raise KnownException(f'Config file {config_path} is invalid, please copy and modify example')
 
-        # Validate configuration
-        prefixes = CONFIG.get('prefixes')
-        if not prefixes or not prefixes.get('service') or not prefixes.get('core'):
+    # Validate configuration
+    prefixes = config.get('prefixes')
+    if not prefixes or not prefixes.get('service') or not prefixes.get('core'):
+        raise KnownException(
+            f'Config file {config_path} has an invalid "prefixes" configuration, please see example'
+        )
+    dc_config = config.get('docker-compose')
+    if not dc_config or not dc_config.get('network') or \
+            not dc_config.get('project') or not dc_config.get('registry'):
+        raise KnownException(
+            f'Config file {config_path} has an invalid "docker-compose" configuration, please see example'
+        )
+    projects = config.get('projects')
+    if not projects or not isinstance(projects, dict):
+        raise KnownException(
+            f'Config file {config_path} has an invalid "projects" configuration, please see example'
+        )
+    for project_name in projects:
+        project_data = projects[project_name]
+        # pylint: disable=too-many-boolean-expressions
+        if not project_data or not isinstance(project_data, dict) or 'directory' not in project_data or \
+                'repository' not in project_data or 'services' not in project_data or \
+                not isinstance(project_data.get('services'), list):
             raise KnownException(
-                f'Config file {CONFIG_PATH} has an invalid "prefixes" configuration, please see example'
+                f'Config file {config_path} has an invalid "projects.{project_name}" '
+                f'configuration, please see example'
             )
-        dc_config = CONFIG.get('docker-compose')
-        if not dc_config or not dc_config.get('network') or \
-                not dc_config.get('project') or not dc_config.get('registry'):
-            raise KnownException(
-                f'Config file {CONFIG_PATH} has an invalid "docker-compose" configuration, please see example'
-            )
-        projects = CONFIG.get('projects')
-        if not projects or not isinstance(projects, dict):
-            raise KnownException(
-                f'Config file {CONFIG_PATH} has an invalid "projects" configuration, please see example'
-            )
-        for project_name in projects:
-            project_data = projects[project_name]
-            # pylint: disable=too-many-boolean-expressions
-            if not project_data or not isinstance(project_data, dict) or 'directory' not in project_data or \
-                    'repository' not in project_data or 'services' not in project_data or \
-                    not isinstance(project_data.get('services'), list):
+        for service_data in project_data.get('services'):
+            if not isinstance(service_data, dict) or 'name' not in service_data:
                 raise KnownException(
-                    f'Config file {CONFIG_PATH} has an invalid "projects.{project_name}" '
-                    f'configuration, please see example'
+                    f'Config file {config_path} has an invalid "projects.{project_name}.services" '
+                    f'entry, please see example'
                 )
-            for service_data in project_data.get('services'):
-                if not isinstance(service_data, dict) or 'name' not in service_data:
-                    raise KnownException(
-                        f'Config file {CONFIG_PATH} has an invalid "projects.{project_name}.services" '
-                        f'entry, please see example'
-                    )
-    return CONFIG
+    return config
 
 
 def get_service_prefix(service_type: str = 'service') -> str:

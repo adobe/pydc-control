@@ -19,7 +19,7 @@ from pydc_control import data, config, exceptions
 @pytest.fixture(name='temp_dir')
 def fixture_temp_dir():
     with tempfile.TemporaryDirectory(prefix='pydc-control-test-') as temp_dir:
-        config.set_base_dir(temp_dir)
+        config.initialize(temp_dir)
         yield temp_dir
 
 
