@@ -188,8 +188,9 @@ def _generate_docker_compose(dev_projects: List[Project], tag: str, enabled_stat
         _render_docker_compose_file(project.path, template_config)
 
 
-def init_docker_compose(args: argparse.Namespace, dev_projects: List[Project]) -> None:
-    docker_utils.check_docker_network()
+def init_docker_compose(args: argparse.Namespace, dev_projects: List[Project], no_network: bool = False) -> None:
+    if not no_network:
+        docker_utils.check_docker_network()
     _check_project_directories(dev_projects)
     _check_required_options()
     enabled_status_by_service = {}
