@@ -61,7 +61,7 @@ def _parse_args(configure_parsers: Callable, args: Optional[Sequence[str]]) -> a
     )
 
     # Build arguments for enabled/disabled service dynamically
-    for service in Service.find_enabled():
+    for service in Service.find_has_enable_flag():
         parser.add_argument(
             f"--enable-{service.name.replace('_', '-')}",
             dest=f"enable_{service.name}",
@@ -69,7 +69,7 @@ def _parse_args(configure_parsers: Callable, args: Optional[Sequence[str]]) -> a
             help=f"Enables the optional {service.name} service from the {service.project_name} "
                  f"project, disabled by default",
         )
-    for service in Service.find_disabled():
+    for service in Service.find_has_disable_flag():
         parser.add_argument(
             f"--disable-{service.name.replace('_', '-')}",
             dest=f"disable_{service.name}",
@@ -272,10 +272,8 @@ def _validate_args(args: argparse.Namespace) -> int:
     # Make sure the config service is not disabled at the same time it is being developed
     config_service_target = Service.find_config()
     # pylint: disable=too-many-boolean-expressions
-    if config_service_target and config_service_target.project_name in args.dev_project_names and (
-            (config_service_target.enable and not getattr(args, f'enable_{config_service_target.name}')) or
-            (config_service_target.disable and getattr(args, f'disable_{config_service_target.name}'))
-    ):
+    if config_service_target and config_service_target.project_name in args.dev_project_names and \
+            config_service_target.is_enabled(args):
         log.get_logger().error(
             f'To use the config service, you must not be developing on the '
             f'{config_service_target.project_name} project.'

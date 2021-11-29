@@ -5,7 +5,7 @@ All Rights Reserved.
 NOTICE: Adobe permits you to use, modify, and distribute this file in accordance
 with the terms of the Adobe license agreement accompanying it.
 """
-
+import argparse
 import os
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
@@ -47,11 +47,11 @@ class Service:
         return self.container_name
 
     @property
-    def enable(self) -> bool:
+    def enable_flag(self) -> bool:
         return bool(self.data.get('enable', False))
 
     @property
-    def disable(self) -> bool:
+    def disable_flag(self) -> bool:
         return bool(self.data.get('disable', False))
 
     @property
@@ -83,6 +83,18 @@ class Service:
                 data[key] = value
         return data
 
+    def is_enabled(self, args: argparse.Namespace) -> bool:
+        """
+        Retrieves if the service is enabled or not (regardless if it is an enabled or disabled service).
+        :param args: the argparse parsed args, used to determine enabled/disabled status
+        :return: true if the service is not flagged enable/disable or it is enabled
+        """
+        # Services that are not enable-able or disable-able are always considered enabled
+        if not self.enable_flag and not self.disable_flag:
+            return True
+        return (self.enable_flag and getattr(args, f'enable_{self.name}')) or \
+               (self.disable_flag and not getattr(args, f'disable_{self.name}'))
+
     @classmethod
     def find_all(cls, core=None) -> List['Service']:
         services = []
@@ -108,17 +120,17 @@ class Service:
         return cls.find_one(target_service)
 
     @classmethod
-    def find_enabled(cls) -> List['Service']:
+    def find_has_enable_flag(cls) -> List['Service']:
         services = []
         for project in Project.find_all():
-            services.extend(service for service in project.services if service.enable)
+            services.extend(service for service in project.services if service.enable_flag)
         return services
 
     @classmethod
-    def find_disabled(cls) -> List['Service']:
+    def find_has_disable_flag(cls) -> List['Service']:
         services = []
         for project in Project.find_all():
-            services.extend(service for service in project.services if service.disable)
+            services.extend(service for service in project.services if service.disable_flag)
         return services
 
 

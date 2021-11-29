@@ -43,7 +43,7 @@ def _check_project_directories(projects: List[Project]) -> None:
                                  'please check the repository')
 
 
-def _set_dynamic_options(enabled_status_by_service: Dict[Service, bool]) -> None:
+def _set_dynamic_options(args: argparse.Namespace) -> None:
     # pylint: disable=too-many-branches
 
     with open(config.get_env_file_path(), 'r', encoding='utf8') as fobj:
@@ -51,8 +51,10 @@ def _set_dynamic_options(enabled_status_by_service: Dict[Service, bool]) -> None
     new_contents = []
     lines_changed = False
 
+    enabled_status_by_service = {}
     services_by_dynamic_option = {}
     for service in Service.find_all():
+        enabled_status_by_service[service.name] = service.is_enabled(args)
         for option in service.dynamic_options.keys():
             services_by_dynamic_option[option] = service
     dynamic_options_seen = {}
@@ -138,17 +140,24 @@ def _render_docker_compose_file(project_dir, template_config):
         )
 
 
-def _generate_docker_compose(dev_projects: List[Project], tag: str, enabled_status_by_service: Dict[Service, bool]):
+def _generate_docker_compose(args: argparse.Namespace, dev_projects: List[Project], tag: str):
     registry = config.get_registry(tag)
     log.get_logger().info(f'Generating docker-compose.yml with {len(dev_projects)} project(s) and tag "{tag}"')
 
     services = {}
     dev_project_names = list(project.name for project in dev_projects)
-    for project in Project.find_all():
+    projects = Project.find_all()
+
+    enabled_services = {}
+    for project in projects:
+        for service in project.services:
+            enabled_services[service.name] = service.is_enabled(args)
+
+    for project in projects:
         if project.name in dev_project_names:
             continue
         for service in project.services:
-            if (service.enable or service.disable) and not enabled_status_by_service.get(service, True):
+            if not enabled_services.get(service.name):
                 continue
             data = service.get_dc_data(registry, tag)
             # Add env file and network dynamically
@@ -172,9 +181,6 @@ def _generate_docker_compose(dev_projects: List[Project], tag: str, enabled_stat
     with open(config.get_docker_compose_path(), 'w', encoding='utf8') as fobj:
         yaml.safe_dump(docker_compose_data, fobj)
 
-    enabled_services = {}
-    for service, status in enabled_status_by_service.items():
-        enabled_services[service.name] = status
     template_config = {
         'dev_project_names': dev_project_names,
         'enabled_services': enabled_services,
@@ -193,11 +199,6 @@ def init_docker_compose(args: argparse.Namespace, dev_projects: List[Project], n
         docker_utils.check_docker_network()
     _check_project_directories(dev_projects)
     _check_required_options()
-    enabled_status_by_service = {}
-    for service in Service.find_enabled():
-        enabled_status_by_service[service] = getattr(args, f'enable_{service.name}')
-    for service in Service.find_disabled():
-        enabled_status_by_service[service] = not getattr(args, f'disable_{service.name}')
-    _set_dynamic_options(enabled_status_by_service)
+    _set_dynamic_options(args)
     _link_config(dev_projects)
-    _generate_docker_compose(dev_projects, args.tag, enabled_status_by_service)
+    _generate_docker_compose(args, dev_projects, args.tag)

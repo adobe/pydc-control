@@ -44,7 +44,9 @@ def _get_dev_projects(args: argparse.Namespace) -> List[Project]:
     return list(project for project in Project.find_all() if project.name in args.dev_project_names)
 
 
-def _run_docker_compose_with_projects(dev_projects: List[Project], docker_compose_args: List[str]) -> int:
+def _run_docker_compose_with_projects(
+        args: argparse.Namespace, dev_projects: List[Project], docker_compose_args: List[str]
+) -> int:
     # Always use the same project name to allow containers to be started/stopped from any repo
     commands = ['docker-compose', '-p', config.get_dc_project()]
     commands.extend(['-f', config.get_docker_compose_path()])
@@ -61,7 +63,9 @@ def _run_docker_compose_with_projects(dev_projects: List[Project], docker_compos
             core_commands.append('--detach')
 
         # Get core service names
-        core_services = Service.find_all(core=True)
+        core_services = list(
+            service for service in Service.find_all(core=True) if service.is_enabled(args)
+        )
         core_service_names = list(service.dc_name for service in core_services)
         core_commands.extend(core_service_names)
 
@@ -115,7 +119,7 @@ def _run_docker_compose_with_projects(dev_projects: List[Project], docker_compos
 def _run_docker_compose_internal(args: argparse.Namespace, docker_compose_args: List[str], no_network: bool=False):
     dev_projects = _get_dev_projects(args)
     docker_compose_utils.init_docker_compose(args, dev_projects, no_network=no_network)
-    return _run_docker_compose_with_projects(dev_projects, docker_compose_args)
+    return _run_docker_compose_with_projects(args, dev_projects, docker_compose_args)
 
 
 def _get_cli_build_args(build_args: Optional[Union[Dict[str, str], List[str]]]) -> List[str]:
@@ -161,7 +165,8 @@ def run_dc_config(args: argparse.Namespace):
 
 
 def run_dc_down(args: argparse.Namespace):
-    return _run_docker_compose_internal(args, ['down'])
+    # Always add remove orphans flag since we can create orphans through enable/disable flags
+    return _run_docker_compose_internal(args, ['down', '--remove-orphans'])
 
 
 def run_dc_pull(args: argparse.Namespace):
@@ -172,7 +177,7 @@ def run_dc_pull_config(args: argparse.Namespace):
     config_service = Service.find_config()
     if not config_service:
         raise KnownException('A config target service is not defined, please define one to pull configuration')
-    if (config_service.disable and args.disable_config) or (config_service.enable and not args.enable_config):
+    if not config_service.is_enabled(args):
         raise KnownException('Cannot pull configuration when using the real config service')
     return _run_docker_compose_internal(args, ['pull', config_service.dc_name])
 
