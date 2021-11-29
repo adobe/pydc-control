@@ -119,22 +119,22 @@ def _link_config(projects: List[Project]):
         log.get_logger().debug(f'Linked in {project.path}')
 
 
-def _render_docker_compose_file(base_dir, template_config):
-    if not os.path.exists(os.path.join(base_dir, config.DOCKER_COMPOSE_TEMPLATE)):
+def _render_docker_compose_file(project_dir, template_config):
+    if not os.path.exists(os.path.join(project_dir, config.DOCKER_COMPOSE_TEMPLATE)):
         log.get_logger().debug(
-            f'No {config.DOCKER_COMPOSE_TEMPLATE} detected in the {base_dir} directory, skipping generation'
+            f'No {config.DOCKER_COMPOSE_TEMPLATE} detected in the {project_dir} directory, skipping generation'
         )
         return
     try:
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader(base_dir))
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader(project_dir))
         template = env.get_template(config.DOCKER_COMPOSE_TEMPLATE)
         output = template.render(**template_config)
-        with open(config.get_docker_compose_path(), 'w', encoding='utf8') as fobj:
+        with open(os.path.join(project_dir, config.DOCKER_COMPOSE_FILE), 'w', encoding='utf8') as fobj:
             fobj.write(output)
     except jinja2.exceptions.TemplateSyntaxError as exc:
         # pylint: disable=raise-missing-from
         raise KnownException(
-            f'Could not render {base_dir}/{config.DOCKER_COMPOSE_TEMPLATE}: {exc.message} on line {exc.lineno}'
+            f'Could not render {project_dir}/{config.DOCKER_COMPOSE_TEMPLATE}: {exc.message} on line {exc.lineno}'
         )
 
 
