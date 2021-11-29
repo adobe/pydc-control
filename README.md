@@ -59,34 +59,10 @@ my-app/
 Determine these variables up front:
 
 * Docker network name (`mynetwork` in the examples below)
-* Docker compose service and container prefix (`mynamespace-` in the examples below)
+* Docker compose service and container prefix (`mynamespace_` in the examples below)
 * Core service prefix (`core_` in the examples below)
 * Docker compose project name (`myproject` in the examples below)
 * Docker registry and tags that will be used for deployed containers
-
-### Setup projects
-
-Each project that pydc_control can own should contain **at least** a `docker-compose.yml`
-file. The docker compose should be quite standard, but typically contains a few elements.
-
-```
-version: '3'
-
-services:
-  # This namespace MUST match the namespace determined above
-  mynamespace_ping:
-    image: containous/whoami:latest
-    # This namespace MUST match the namespace determined above
-    container_name: mynamespace_ping
-    ports:
-    - "80"
-    networks:
-    - mynetwork
-
-networks:
-  mynetwork:
-    external: true
-```
 
 ### Create a control project
 
@@ -119,7 +95,7 @@ if __name__ == '__main__':
 Copy the `config.yml.example` file (or create your own) and add it to the control
 project. **Every project** in your application should have an entry in the `projects`
 list in this file, with one or more services (containers) attached to it. The syntax
-is similar to a docker-compose file, but has a layer of indirection to handle projects
+is similar to a docker-compose file, but has a layer of abstraction to handle projects
 with multiple services. This file will be used to generate the base docker compose
 file during control script runs.
 
@@ -140,6 +116,48 @@ control project. *This file should be ignored by your VCS.*
 
 Any environment variables defined here will be added automatically to any running
 container (unless they define `env_file: []` in the configuration file).
+
+### Setup projects
+
+Each project that pydc control can own should contain **at least** a `docker-compose.yml`
+file. The docker compose should be quite standard, but typically contains a few elements.
+
+```
+version: '3'
+
+services:
+    # This prefix MUST match the service prefix determined above
+  mynamespace_ping:
+    image: containous/whoami:latest
+    ports:
+    - "80"
+    networks:
+    - mynetwork
+
+networks:
+  mynetwork:
+    external: true
+```
+
+#### Setup template projects
+
+Projects with docker compose templates can add some variables that are pulled automatically from the config file:
+
+```
+version: '3'
+
+services:
+  {{ service_prefix }}_ping:
+    image: containous/whoami:latest
+    ports:
+    - "80"
+    networks:
+    - {{ network }}
+
+networks:
+  {{ network }}:
+    external: true
+```
 
 
 ## Usage
@@ -260,14 +278,13 @@ simply create a file named `docker-compose-template.yml` and then make sure that
 run of the control script. The template file is processed via Jinja and has several
 variables available to it such as:
 
-* 
-        'dev_project_names': dev_project_names,
-        'enabled_services': enabled_services,
-        'tag': tag,
-        'registry': registry,
-        'network': config.get_dc_network(),
-        'core_prefix': config.get_service_prefix('core'),
-        'service_prefix': config.get_service_prefix(),
+* `dev_project_names` - The names of the project currently under development
+* `enabled_services` - The services that are marked as enabled and are currently enabled
+* `tag` - The docker tag selected
+* `registry` - The docker registry from the config file
+* `network` - The docker network from the config file
+* `core_prefix` - The prefix to use for core containers
+* `service_prefix` - The prefix to use for service containers
 
 ### Making services enabled/disabled
 

@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  {{ service_prefix }}service3:
+    image: containous/whoami:latest
+    container_name: pydcdev_service3
+    ports:
+    - "80"
+    networks:
+    - {{ network }}
+
+networks:
+  {{ network }}:
+    external: true

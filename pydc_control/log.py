@@ -9,7 +9,8 @@ with the terms of the Adobe license agreement accompanying it.
 import logging
 
 
-_LOGGER: logging.Logger = None
+# Global vars
+_LOGGER: logging.Logger
 
 
 def init_logger(debug: bool) -> None:

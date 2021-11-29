@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  pydc_service1:
+    image: containous/whoami:latest
+    ports:
+    - "80"
+    networks:
+    - pydc_sample
+  pydc_service2:
+    image: containous/whoami:latest
+    ports:
+    - "80"
+    networks:
+    - pydc_sample
+
+networks:
+  pydc_sample:
+    external: true
