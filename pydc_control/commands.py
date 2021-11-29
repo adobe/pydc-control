@@ -116,7 +116,7 @@ def _run_docker_compose_with_projects(
     return call_commands(commands)
 
 
-def _run_docker_compose_internal(args: argparse.Namespace, docker_compose_args: List[str], no_network: bool=False):
+def _run_docker_compose_internal(args: argparse.Namespace, docker_compose_args: List[str], no_network: bool = False):
     dev_projects = _get_dev_projects(args)
     docker_compose_utils.init_docker_compose(args, dev_projects, no_network=no_network)
     return _run_docker_compose_with_projects(args, dev_projects, docker_compose_args)

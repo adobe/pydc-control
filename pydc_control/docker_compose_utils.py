@@ -8,7 +8,7 @@ with the terms of the Adobe license agreement accompanying it.
 
 import argparse
 import os
-from typing import Dict, List
+from typing import List
 
 import jinja2
 import yaml
