@@ -178,7 +178,7 @@ def run_dc_pull_config(args: argparse.Namespace):
 
 
 def run_dc_rm(args: argparse.Namespace):
-    return _run_docker_compose_internal(args, ['rm'])
+    return _run_docker_compose_internal(args, ['rm', '--force'])
 
 
 def run_dc_stop(args: argparse.Namespace):

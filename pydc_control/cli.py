@@ -8,7 +8,7 @@ with the terms of the Adobe license agreement accompanying it.
 
 import argparse
 import os
-from typing import Callable, List
+from typing import Callable, List, Optional, Sequence
 
 from . import commands, config, log
 from .data import Project, Service
@@ -24,7 +24,7 @@ def _get_print_help_func(parser):
     return print_help
 
 
-def _parse_args(configure_parsers: Callable) -> argparse.Namespace:
+def _parse_args(configure_parsers: Callable, args: Optional[Sequence[str]]) -> argparse.Namespace:
     # pylint: disable=too-many-locals
 
     # Get all projects defined in the configuration
@@ -197,7 +197,7 @@ def _parse_args(configure_parsers: Callable) -> argparse.Namespace:
     )
     rm_parser = subparsers.add_parser(
         'rm',
-        help='Alias for the "dc rm" command'
+        help='Alias for the "dc rm --force" command'
     )
     rm_parser.set_defaults(
         func=commands.run_dc_rm,
@@ -246,7 +246,7 @@ def _parse_args(configure_parsers: Callable) -> argparse.Namespace:
         configure_parsers(parser, subparsers)
 
     # Parse arguments
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 
 def _validate_args(args: argparse.Namespace) -> int:
@@ -294,18 +294,19 @@ def _detect_current_project(dev_project_names: List[str]) -> None:
                 dev_project_names.append(project.name)
 
 
-def run(base_dir: str, configure_parsers: Callable = None) -> int:
+def run(base_dir: str, configure_parsers: Callable = None, args: Optional[Sequence[str]] = None) -> int:
     """
     Runs the CLI control command, including parsing arguments, etc.
     :param base_dir: The base directory of the control project
     :param configure_parsers: An optional method to configure additional parameters or arguments on the parser.
                               It receives two arguments, the top-level parser and the subparser for commands.
+    :param args: Optional arguments to use instead of sys.argv.
     :return: The exit code
     """
     # Initialize config based on the base dir
     config.initialize(base_dir)
 
-    args = _parse_args(configure_parsers)
+    args = _parse_args(configure_parsers, args)
 
     # Initialize logging
     log.init_logger(args.debug)
