@@ -13,8 +13,11 @@ import docker
 from docker.models.containers import Container
 import pytest
 
-
 import pydc_control
+from . import fixture_cleanup_caches
+
+
+_ = fixture_cleanup_caches
 
 
 # Use a relative path to this script since sometimes IDEs mangle the working directory
@@ -52,7 +55,7 @@ def fixture_docker_client():
 
 
 @pytest.fixture(autouse=True)
-def fixture_cleanup():
+def fixture_cleanup_containers():
     yield
     print('Cleaning up containers')
     _run_control_commands(['down'])

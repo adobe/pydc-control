@@ -14,10 +14,10 @@ import pytest
 import yaml
 
 from pydc_control import data, config, exceptions
-from . import fixture_cleanup
+from . import fixture_cleanup_caches
 
 
-_ = fixture_cleanup
+_ = fixture_cleanup_caches
 
 
 @pytest.fixture(name='temp_dir')
