@@ -9,7 +9,5 @@ dist/
 *.swp
 pytest_cache
 
-docker-compose.env
-docker-compose.yml
-
-
+./docker-compose.env
+./docker-compose.yml

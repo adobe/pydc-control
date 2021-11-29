@@ -4,4 +4,6 @@ pytest-cov==2.12.1
 pylint==2.10.2
 pylintfileheader==0.3.0
 pycodestyle==2.8.0
+# Lock major version only
+docker<6
 tox-pyenv

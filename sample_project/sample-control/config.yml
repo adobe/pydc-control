@@ -1,0 +1,56 @@
+prefixes:
+  service: pydc_
+  core: pydc_core_
+docker-compose:
+  project: pydc_sample
+  network: pydc_sample
+  tags:
+  - latest
+  registry: docker.io
+
+projects:
+  project-multiple-services:
+    directory: project-multiple-services
+    repository: repo1
+    services:
+    - name: service1
+      image_path: /containous/whoami
+    - name: service2
+      image: containous/whoami:latest
+  project-dc-template:
+    directory: project-dc-template
+    repository: repo2
+    services:
+    - name: service3
+      image: containous/whoami:latest
+  project-dev:
+    directory: project-dev
+    repository: repo3
+    services:
+    - name: service4
+      image: containous/whoami:latest
+
+  # Projects without directories (typically core services, but not required)
+  project-no-directory:
+    directory: null
+    repository: null
+    services:
+    - name: core1
+      core: true
+      image: containous/whoami:latest
+      env_file: []
+      ports:
+      - "80"
+    - name: core2
+      core: true
+      enable: true
+      image: containous/whoami:latest
+      env_file: []
+      ports:
+      - "80"
+
+  # Projects without services (typically additional projects that are used or mounted by docker)
+  project-no-services:
+    directory: project-no-services
+    repository: repo4
+    services: []
