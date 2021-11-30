@@ -60,8 +60,8 @@ jobs:
     - name: Check upload
       run: pip install twine && twine check dist/*
     - name: Publish to PyPi
-      # Only publish if this is a tag
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+      # Only publish if this was a push
+      if: github.event_name == 'push'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: __token__
