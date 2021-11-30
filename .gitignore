@@ -9,5 +9,8 @@ dist/
 *.swp
 pytest_cache
 
+# This is generated on every build
+pydc_control/VERSION
+
 ./docker-compose.env
 ./docker-compose.yml

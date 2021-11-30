@@ -43,10 +43,16 @@ jobs:
     needs: test
     steps:
     - uses: actions/checkout@v2
+      with:
+        # Fetch all history in order to get the commit count for the version in setup.py
+        fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
+    - name: Remove version file
+      # This is just in case something else created it, destroy it so we'll get a fresh version
+      run: rm -f pydc_control/VERSION
     - name: Install wheel
       run: pip install wheel
     - name: Build
