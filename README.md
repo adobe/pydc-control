@@ -5,8 +5,9 @@ a coordinated way, allowing you to start, stop, and developing on separate proje
 as necessary.
 
 This project was built from requirements at Adobe that arose when splitting a
-monolith project into microservices. It is eases this transition and makes it easy
-to run multiple projects at the same time.
+monolith project into microservices. It simplifies this transition and makes it easy
+to run multiple projects at the same time whether pulling from built/deployed
+upstream docker images or developing using local code.
 
 
 ## Features
@@ -16,10 +17,10 @@ to run multiple projects at the same time.
 * Start or stop an entire application, no matter the number of projects or
   docker-compose files, with a single command
 * Extremely configurable, add your own commands and projects
-* Integrates directly with docker compose, as long as you docker compose files,
+* Integrates directly with docker compose, as long as you can use docker compose files,
   this project can control them
 * Allows easy development of a single project or multiple projects at the same time
-* Generate dynamic docker-compose templates using Jinja for any number of projects
+* Generate dynamic docker-compose files using Jinja templates for any number of projects
 
 
 ## Setup
