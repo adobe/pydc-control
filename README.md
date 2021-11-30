@@ -121,13 +121,17 @@ container (unless they define `env_file: []` in the configuration file).
 ### Setup projects
 
 Each project that pydc control can own should contain **at least** a `docker-compose.yml`
-file. The docker compose should be quite standard, but typically contains a few elements.
+file. The docker compose should be quite standard, but typically must contain at least
+one service that is prefixed with the service/container prefix determined above and the
+network as determined above. The service should also be attached to that network.
+
+For example:
 
 ```
 version: '3'
 
 services:
-    # This prefix MUST match the service prefix determined above
+  # This prefix MUST match the service prefix determined above
   mynamespace_ping:
     image: containous/whoami:latest
     ports:
@@ -208,7 +212,7 @@ appctl dc -- <additional docker compose args>
 
 #### Container startup order
 
-Services are started up using the following:
+Services are started up using the following method:
 
 * All services (containers) marked with `core: true` are started detached
 * All open ports defined on the core services are checked to make sure they are open
@@ -221,11 +225,14 @@ Services are started up using the following:
 * All developed project services are started and logs are displayed for *only* these
   services
 
+The reason for the detached behavior for many of the containers is that they can run in the
+background and are often not changed. Additionally, this prevents logs from showing up for them
+in the console, which could cause extra noise when developing on only one or two projects.
+
 If the control script process is interrupted (via Ctrl+C for example), the developed
 project services are attempted to be stopped (and only these) so that they may be restarted
 again. All of these operations and choices are to ensure the smoothest experience with
-docker compose logs and interactions to focus mostly on your developed projects and
-not all of the other containers.
+docker compose logs and interactions so that you can focus only on your developed projects.
 
 ### Perform VCS checkout, pull, status (git only) 
 
