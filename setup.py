@@ -1,10 +1,27 @@
-from os.path import join, dirname
+
+import os
 from setuptools import setup, find_packages
+import subprocess
 
 
-with open(join(dirname(__file__), 'pydc_control/VERSION')) as fobj:
-    version = fobj.read().strip()
-with open(join(dirname(__file__), 'README.md')) as fobj:
+MAJOR_VERSION = '1'
+
+
+version_file = os.path.join(os.path.dirname(__file__), 'pydc_control/VERSION')
+if os.path.exists(version_file):
+    # Read version from file
+    with open(version_file, 'r', encoding='utf8') as fobj:
+        version = fobj.read().strip()
+else:
+    # Generate the version and store it in the file
+    result = subprocess.run('git rev-list --count HEAD', shell=True, capture_output=True, encoding='utf8')
+    commit_count = result.stdout.strip()
+    version = f'{MAJOR_VERSION}.{commit_count}'
+    print(f'Setting version to {version} and writing to {version_file}')
+    with open(version_file, 'w', encoding='utf8') as fobj:
+        fobj.write(version)
+
+with open(os.path.join(os.path.dirname(__file__), 'README.md')) as fobj:
     long_description = fobj.read().strip()
 
 setup(
