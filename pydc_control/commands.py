@@ -154,9 +154,12 @@ def run_dc_build(args: argparse.Namespace):
     if args.dev_project_names and not args.all_projects:
         dev_projects = _get_dev_projects(args)
         for project in dev_projects:
-            docker_compose_args.extend(
-                docker_utils.read_services_from_dc(os.path.join(project.path, config.DOCKER_COMPOSE_FILE))
-            )
+            # Sometimes the docker compose file might be missing during a build. If so, just generate it right now.
+            # This should only run once for all dev projects
+            dc_file_path = os.path.join(project.path, config.DOCKER_COMPOSE_FILE)
+            if not os.path.exists(dc_file_path):
+                docker_compose_utils.init_docker_compose(args, dev_projects, no_network=True)
+            docker_compose_args.extend(docker_utils.read_services_from_dc(dc_file_path))
     return _run_docker_compose_internal(args, docker_compose_args)
 
 
