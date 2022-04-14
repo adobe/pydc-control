@@ -8,7 +8,7 @@ with the terms of the Adobe license agreement accompanying it.
 import argparse
 import os
 from functools import lru_cache
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from .config import get_base_dir, get_project_config, get_service_prefix, get_target_service
 from .exceptions import KnownException
@@ -47,12 +47,14 @@ class Service:
         return self.container_name
 
     @property
-    def enable_flag(self) -> bool:
-        return bool(self.data.get('enable', False))
+    def enable_flag(self) -> Union[str, bool]:
+        flag_value = self.data.get('enable', False)
+        return flag_value if flag_value else bool(flag_value)
 
     @property
-    def disable_flag(self) -> bool:
-        return bool(self.data.get('disable', False))
+    def disable_flag(self) -> Union[str, bool]:
+        flag_value = self.data.get('disable', False)
+        return flag_value if flag_value else bool(flag_value)
 
     @property
     def core(self) -> bool:
@@ -83,6 +85,23 @@ class Service:
                 data[key] = value
         return data
 
+    def _get_flag_name(self, flag_value: Union[str, bool], prefix: str) -> str:
+        if isinstance(flag_value, str):
+            return f'{prefix}_{flag_value}'
+        return f'{prefix}_{self.name}'
+
+    def _get_flag_value(
+        self,
+        args: argparse.Namespace,
+        flag_value: Union[str, bool],
+        prefix: str,
+        reverse: bool = False,
+    ) -> bool:
+        if not flag_value:
+            return False
+        arg_value = getattr(args, self._get_flag_name(flag_value, prefix), False)
+        return (arg_value and not reverse) or (not arg_value and reverse)
+
     def is_enabled(self, args: argparse.Namespace) -> bool:
         """
         Retrieves if the service is enabled or not (regardless if it is an enabled or disabled service).
@@ -92,8 +111,9 @@ class Service:
         # Services that are not enable-able or disable-able are always considered enabled
         if not self.enable_flag and not self.disable_flag:
             return True
-        return (self.enable_flag and getattr(args, f'enable_{self.name}')) or \
-               (self.disable_flag and not getattr(args, f'disable_{self.name}'))
+        is_enabled = self._get_flag_value(args, self.enable_flag, 'enable')
+        is_not_disabled = self._get_flag_value(args, self.disable_flag, 'disable', reverse=True)
+        return is_enabled or is_not_disabled
 
     @classmethod
     def find_all(cls, core=None) -> List['Service']:
