@@ -273,7 +273,7 @@ def _validate_args(args: argparse.Namespace) -> int:
     config_service_target = Service.find_config()
     # pylint: disable=too-many-boolean-expressions
     if config_service_target and config_service_target.project_name in args.dev_project_names and \
-            config_service_target.is_enabled(args):
+            not config_service_target.is_enabled(args):
         log.get_logger().error(
             f'To use the config service, you must not be developing on the '
             f'{config_service_target.project_name} project.'
