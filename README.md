@@ -335,6 +335,14 @@ services:
   {%- endif %}
 ```
 
+#### Using enable flags from other services
+
+Sometimes it is desired to use a single enable flag to enable multiple services across projects.
+This may be done by setting the `enable` or `disable` flags to the name of the service to use
+for enabling/disabling. This requires that the other service also has the same flag set to `true`.
+Multiple levels of enable/disable redirection are not possible (e.g. s1 is enabled with  s2 which
+is enabled with s3).
+
 ### Create your own control script commands
 
 It is easy to create additional commands using pydc_control.

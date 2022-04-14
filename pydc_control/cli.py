@@ -24,7 +24,7 @@ def _get_print_help_func(parser):
     return print_help
 
 
-def _parse_args(configure_parsers: Callable, args: Optional[Sequence[str]]) -> argparse.Namespace:
+def _parse_args(configure_parsers: Optional[Callable], args: Optional[Sequence[str]]) -> argparse.Namespace:
     # pylint: disable=too-many-locals
 
     # Get all projects defined in the configuration

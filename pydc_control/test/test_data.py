@@ -13,7 +13,7 @@ import tempfile
 import pytest
 import yaml
 
-from pydc_control import data, config, exceptions
+from pydc_control import data, cli, config, exceptions
 from . import fixture_cleanup_caches
 
 
@@ -104,3 +104,55 @@ def test_projects_with_services(temp_dir):
     assert projects[1].name == 'project2'
     assert len(projects[1].services) == 1
     assert projects[1].services[0].name == 'service3'
+
+
+@pytest.mark.parametrize('service_name, argv, result', [
+    ('no-flags', [], True),
+    ('enabled', [], False),
+    ('enabled', ['--enable-enabled'], True),
+    ('disabled', [], True),
+    ('disabled', ['--disable-disabled'], False),
+    ('enabled-proxy', [], False),
+    ('enabled-proxy', ['--enable-enabled'], True),
+    ('disabled-proxy', [], True),
+    ('disabled-proxy', ['--disable-disabled'], False),
+])
+def test_is_enabled(service_name, argv, result, temp_dir):
+    _write_config(temp_dir, {
+        'projects': {
+            'project1': {
+                'directory': None,
+                'repository': None,
+                'services': [
+                    {
+                        'name': 'no-flags',
+                    },
+                    {
+                        'name': 'enabled',
+                        'enable': 1,
+                    },
+                    {
+                        'name': 'disabled',
+                        'disable': True,
+                    },
+                ],
+            },
+            'project2': {
+                'directory': None,
+                'repository': None,
+                'services': [
+                    {
+                        'name': 'enabled-proxy',
+                        'enable': 'enabled',
+                    },
+                    {
+                        'name': 'disabled-proxy',
+                        'disable': 'disabled',
+                    },
+                ],
+            }
+        }
+    })
+    args = cli._parse_args(None, argv)
+    service = data.Service.find_one(service_name)
+    assert service.is_enabled(args) is result
