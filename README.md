@@ -113,7 +113,10 @@ Note that several settings near the top of the file are required.
 #### Environment variables file
 
 Copy the `docker-compose.env.example` file (or create your own) and add it to the
-control project. *This file should be ignored by your VCS.*
+control project. *This file should be ignored by your VCS.* It may be helpful to
+create a `docker-compose.env.example` file of your own in the project with
+placeholders that may be filled in by individual developers when setting up their
+own environment.
 
 Any environment variables defined here will be added automatically to any running
 container (unless they define `env_file: []` in the configuration file).
@@ -163,6 +166,12 @@ networks:
   {{ network }}:
     external: true
 ```
+
+### Add README
+
+Copy the [README-example.rst](README-example.rst) to the `README.rst` file in your
+control project. Follow the instructions at the top of the file to customize it for
+your project.
 
 
 ## Usage
@@ -236,7 +245,7 @@ docker compose logs and interactions so that you can focus only on your develope
 
 ### Perform VCS checkout, pull, status (git only) 
 
-To checkout and/or update all projects listed in the `config.yml` automatically,
+To clone and/or update all projects listed in the `config.yml` automatically,
 use the following command:
 
 ```
@@ -264,7 +273,7 @@ This can be done by using the `image_path` key in the service definition in
 `config.yml` instead of `image`. The full image reference is generated from 3 pieces
 of information:
 
-* The image **path** defined in the `image_path` property for the the service
+* The image **path** defined in the `image_path` property for the service
   in `config.yml`
 * The tag defined on the command line of your control script (`-t`)
 
