@@ -77,8 +77,10 @@ def _set_dynamic_options(args: argparse.Namespace) -> None:
                 new_line = f'{option}={value}'
                 if line != new_line:
                     log.get_logger().info(f'Replacing dynamic option for {option} in {config.ENV_FILE} with {value}')
-                    new_contents.append(new_line)
                     lines_changed = True
+                else:
+                    log.get_logger().info(f'Keeping existing dynamic option for {option} in {config.ENV_FILE}')
+                new_contents.append(new_line)
             else:
                 log.get_logger().info(f'Removing dynamic option for {option} in {config.ENV_FILE}')
                 lines_changed = True
