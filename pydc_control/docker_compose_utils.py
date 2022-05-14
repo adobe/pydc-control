@@ -64,7 +64,7 @@ def _set_dynamic_options(args: argparse.Namespace) -> None:
     for line in env_file_contents.splitlines():
         option_considered = False
         for option, service in services_by_dynamic_option.items():
-            if option not in line:
+            if not line.startswith(f'{option}='):
                 continue
             option_considered = True
             dynamic_options_seen[option] = True
