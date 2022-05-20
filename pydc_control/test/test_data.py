@@ -7,46 +7,17 @@ with the terms of the Adobe license agreement accompanying it.
 """
 # pylint: disable=protected-access
 
-import os
-import tempfile
-
 import pytest
-import yaml
 
-from pydc_control import data, cli, config, exceptions
-from . import fixture_cleanup_caches
-
-
-_ = fixture_cleanup_caches
+from pydc_control import data, cli, exceptions
+from . import fixture_cleanup_caches, fixture_temp_dir, write_config
 
 
-@pytest.fixture(name='temp_dir')
-def fixture_temp_dir():
-    with tempfile.TemporaryDirectory(prefix='pydc-control-test-') as temp_dir:
-        config.initialize(temp_dir)
-        yield temp_dir
-
-
-def _write_config(temp_dir: str, write_data: dict) -> None:
-    config_data = {
-        'prefixes': {
-            'service': 'mynamespace_',
-            'core': 'core_',
-        },
-        'docker-compose': {
-            'project': 'project1',
-            'network': 'project1',
-            'tags': ['latest'],
-            'registry': 'registry1',
-        },
-    }
-    config_data.update(write_data)
-    with open(os.path.join(temp_dir, 'config.yml'), 'w', encoding='utf8') as fobj:
-        yaml.safe_dump(config_data, fobj)
+_ = fixture_cleanup_caches, fixture_temp_dir
 
 
 def test_no_projects(temp_dir):
-    _write_config(temp_dir, {
+    write_config(temp_dir, {
         'projects': {},
     })
     with pytest.raises(exceptions.KnownException):
@@ -54,7 +25,7 @@ def test_no_projects(temp_dir):
 
 
 def test_project_no_services(temp_dir):
-    _write_config(temp_dir, {
+    write_config(temp_dir, {
         'projects': {
             'project1': {
                 'directory': 'project1',
@@ -70,7 +41,7 @@ def test_project_no_services(temp_dir):
 
 
 def test_projects_with_services(temp_dir):
-    _write_config(temp_dir, {
+    write_config(temp_dir, {
         'projects': {
             'project1': {
                 'directory': 'project1',
@@ -118,7 +89,7 @@ def test_projects_with_services(temp_dir):
     ('disabled-proxy', ['--disable-disabled'], False),
 ])
 def test_is_enabled(service_name, argv, result, temp_dir):
-    _write_config(temp_dir, {
+    write_config(temp_dir, {
         'projects': {
             'project1': {
                 'directory': None,
