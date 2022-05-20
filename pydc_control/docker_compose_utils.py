@@ -68,7 +68,7 @@ def _set_dynamic_options(args: argparse.Namespace) -> None:
                 continue
             option_considered = True
             dynamic_options_seen[option] = True
-            if enabled_status_by_service.get(service, True):
+            if enabled_status_by_service.get(service.name, True):
                 value = service.dynamic_options[option].get('enabled')
             else:
                 value = service.dynamic_options[option].get('disabled')
