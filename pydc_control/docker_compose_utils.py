@@ -171,7 +171,6 @@ def _generate_docker_compose(args: argparse.Namespace, dev_projects: List[Projec
 
     # Write out base docker compose
     docker_compose_data = {
-        'version': '3',
         'networks': {
             config.get_dc_network(): {
                 'external': True,
