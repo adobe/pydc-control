@@ -10,10 +10,10 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-        - 3.6
         - 3.7
         - 3.8
         - 3.9
+        - '3.10'
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -32,9 +32,8 @@ jobs:
     - name: Test with pytest
       run: pytest --junitxml=test-reports/test-results.xml
     - name: Publish test results
-      uses: EnricoMi/publish-unit-test-result-action/composite@v1
-      # exclude this step for 3.6, since it fails due to a breaking change to EnricoMi/publish-unit-test-result-action
-      if: always() && matrix.python-version != '3.6'
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
       with:
         files: test-reports/test-results.xml
         check_name: "Test Results ${{ matrix.python-version }}"
