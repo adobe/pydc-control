@@ -21,6 +21,8 @@ upstream docker images or developing using local code.
   this project can control them
 * Allows easy development of a single project or multiple projects at the same time
 * Generate dynamic docker-compose files using Jinja templates for any number of projects
+* Manage a [pre-commit](https://pre-commit.com/) config file in one place to copy and
+  install in each project
 
 
 ## Setup
@@ -45,6 +47,8 @@ my-app/
     config.yml
     # Environment variable configuration, symlinked to all projects automatically
     docker-compose.env
+    # Optional pre-commit config file that will be copied and installed in each project
+    .pre-commit-config.yaml
   # Arbitrary projects
   project1/
     # The only required file for a project is a docker-compose file

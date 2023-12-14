@@ -39,7 +39,8 @@ setup(
     install_requires=(
         'Jinja2>=2.7.2',
         'PyYAML>=5.1.2',
-        'requests>=2',
+        'requests',
+        'pre-commit>3',
     ),
     classifiers=[
         'Development Status :: 5 - Production/Stable',
