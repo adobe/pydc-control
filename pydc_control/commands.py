@@ -243,9 +243,14 @@ def run_checkout(args: argparse.Namespace):
             continue
 
         if os.path.exists(project.path):
-            log.get_logger().info(f'########### {project.name} (pulling changes) ###########')
-            commands = ['git', 'pull', 'upstream', 'master']
             cwd = project.path
+            head_branch = subprocess.check_output(
+                ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+                encoding='utf8',
+                cwd=cwd,
+            ).strip()
+            log.get_logger().info(f'########### {project.name} (pulling changes for {head_branch}) ###########')
+            commands = ['git', 'pull', 'upstream', head_branch]
         else:
             log.get_logger().info(f'########### {project.name} (cloning) ###########')
             commands = ['git', 'clone', '--origin', 'upstream', project.repository]
