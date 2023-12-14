@@ -8,6 +8,7 @@ with the terms of the Adobe license agreement accompanying it.
 
 import argparse
 import os
+import shutil
 import signal
 import subprocess
 import time
@@ -224,6 +225,56 @@ def get_repo_status(args: argparse.Namespace):
         subprocess.call(['git', 'status', '--short', '--branch', '--untracked-files=no'], cwd=project.path)
 
 
+def _handle_extra_remotes(extra_remotes: List[str], project: Project) -> None:
+    if not extra_remotes:
+        return
+    log.get_logger().debug('Adding any remotes specified if not already added')
+    base_git_path = project.repository.split(':')[0]
+    for remote in extra_remotes:
+        org = name = remote[0]
+        if len(remote) == 2:
+            # an optional name to be specified for the remote
+            name = remote[1]
+
+        # check if remote exists
+        command = ['git', 'ls-remote', '-q', '--exit-code', name]
+        # ignore stdout as the check can be misleading if this is the first time we are adding a repo
+        with open(os.devnull, 'wb') as fnull:
+            exit_code = subprocess.call(command, cwd=project.path, stdout=fnull, stderr=subprocess.STDOUT)
+        if exit_code == 0:
+            log.get_logger().debug(f'Remote {name} already exists in project {project.name}')
+            continue
+        log.get_logger().info(f'Trying to add remote {name} at '
+                              f'{base_git_path}:{org}/{project.directory}.git in project {project.name}')
+        command = ['git', 'remote', 'add', name, f'{base_git_path}:{org}/{project.directory}.git']
+        exit_code = subprocess.call(command, cwd=project.path)
+
+        if exit_code:
+            log.get_logger().warning(
+                f'There was a problem adding remote {remote} in project {project.name}'
+            )
+
+
+def _handle_pre_commit(project: Project) -> None:
+    # If there is a pre-commit config file, then copy it to each repo, git add it, and install it
+    pre_commit_config_path = config.get_pre_commit_config_path()
+    if os.path.exists(pre_commit_config_path):
+        log.get_logger().debug(f'Pre-commit config file {pre_commit_config_path} exists, installing')
+        pre_commit_file_name = os.path.basename(pre_commit_config_path)
+        shutil.copy(
+            pre_commit_config_path,
+            os.path.join(project.path, pre_commit_file_name),
+        )
+        subprocess.call(['git', 'add', pre_commit_file_name], cwd=project.path)
+        exit_code = subprocess.call(['pre-commit', 'install'], cwd=project.path)
+        if exit_code:
+            log.get_logger().warning(
+                f'Could not run pre-commit install for {project.name} ({project.path}), see errors above'
+            )
+    else:
+        log.get_logger().debug(f'Pre-commit config file {pre_commit_config_path} does not exist, ignoring')
+
+
 def run_checkout(args: argparse.Namespace):
     # pylint: disable=too-many-branches
     if args.all_projects or not args.dev_project_names:
@@ -260,31 +311,10 @@ def run_checkout(args: argparse.Namespace):
         if exit_code:
             log.get_logger().warning(f'Could not clone or update {project.name} ({project.path}), see errors above')
             result = exit_code
-
-        if not result and len(args.extra_remotes) > 0:
-            log.get_logger().debug('Adding any remotes specified if not already added')
-            base_git_path = project.repository.split(':')[0]
-            for remote in args.extra_remotes:
-                org = name = remote[0]
-                if len(remote) == 2:
-                    # an optional name to be specified for the remote
-                    name = remote[1]
-
-                # check if remote exists
-                command = ['git', 'ls-remote', '-q', '--exit-code', name]
-                # ignore stdout as the check can be misleading if this is the first time we are adding a repo
-                with open(os.devnull, 'wb') as fnull:
-                    exit_code = subprocess.call(command, cwd=project.path, stdout=fnull, stderr=subprocess.STDOUT)
-                if exit_code == 0:
-                    log.get_logger().debug(f'Remote {name} already exists in project {project.name}')
-                    continue
-                log.get_logger().info(f'Trying to add remote {name} at '
-                                      f'{base_git_path}:{org}/{project.directory}.git in project {project.name}')
-                command = ['git', 'remote', 'add', name, f'{base_git_path}:{org}/{project.directory}.git']
-                exit_code = subprocess.call(command, cwd=project.path)
-
-                if exit_code:
-                    log.get_logger().warning(f'There was a problem adding remote {remote} in project {project.name}')
+        else:
+            # Cloning/updating was successful
+            _handle_extra_remotes(args.extra_remotes, project)
+            _handle_pre_commit(project)
 
     return result
 

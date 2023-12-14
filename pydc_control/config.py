@@ -12,6 +12,8 @@ from typing import Any, Dict, Iterable, List, Optional, Union
 
 import yaml
 
+from pre_commit.constants import CONFIG_FILE as PRE_COMMIT_CONFIG_FILE
+
 from .exceptions import KnownException
 
 
@@ -42,6 +44,12 @@ def get_base_dir() -> str:
 @lru_cache()
 def get_env_file_path() -> str:
     return os.path.join(_BASE_DIR, ENV_FILE)
+
+
+# The following methods are cached so that we only retrieve/validate them once (config cannot be changed mid-run)
+@lru_cache()
+def get_pre_commit_config_path() -> str:
+    return os.path.join(_BASE_DIR, str(PRE_COMMIT_CONFIG_FILE))
 
 
 @lru_cache()
