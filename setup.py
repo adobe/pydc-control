@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 import subprocess
 
 
-MAJOR_VERSION = '1'
+MAJOR_VERSION = '2'
 
 
 version_file = os.path.join(os.path.dirname(__file__), 'pydc_control/VERSION')
