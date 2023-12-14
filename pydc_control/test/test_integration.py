@@ -35,6 +35,7 @@ def _run_control_commands(args: List[str], working_dir: Optional[str] = None) ->
         os.chdir(working_dir)
     exit_code = pydc_control.run(SAMPLE_CONTROL_BASE_DIR, args=args)
     if exit_code:
+        # pylint: disable=broad-exception-raised
         raise Exception(f'Could not startup sample project due to exit code: {exit_code}')
     if working_dir:
         os.chdir(original_working_dir)

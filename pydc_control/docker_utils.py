@@ -68,7 +68,7 @@ def is_port_open(port):
 
 def _is_path_responding(port: int, path: str) -> bool:
     with contextlib.suppress(Exception):
-        return requests.get(f'http://localhost:{port}{path}').status_code == 200
+        return requests.get(f'http://localhost:{port}{path}', timeout=30).status_code == 200
 
 
 def check_port(container_name: str, port: int, path: str) -> None:
