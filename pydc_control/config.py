@@ -46,10 +46,11 @@ def get_env_file_path() -> str:
     return os.path.join(_BASE_DIR, ENV_FILE)
 
 
-# The following methods are cached so that we only retrieve/validate them once (config cannot be changed mid-run)
 @lru_cache()
-def get_pre_commit_config_path() -> str:
-    return os.path.join(_BASE_DIR, str(PRE_COMMIT_CONFIG_FILE))
+def get_pre_commit_config_path(project_pre_commit_config: Union[str, bool]) -> str:
+    if isinstance(project_pre_commit_config, bool):
+        return os.path.join(_BASE_DIR, str(PRE_COMMIT_CONFIG_FILE))
+    return os.path.join(_BASE_DIR, project_pre_commit_config)
 
 
 @lru_cache()
