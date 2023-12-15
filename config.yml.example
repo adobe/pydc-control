@@ -44,6 +44,9 @@ projects:
     directory: my-project1
     # The repository to clone the project from
     repository: git@github.com:myorg/project1.git
+    # An optional reference to a pre-commit config file to copy and install in the repo on repo update/clone
+    # This file should be in the control project
+    #pre_commit_config: my-pre-commit-file.yaml
     # A list of services (containers) to run
     services:
     # The service name is automatically prefixed with the service prefix configured above

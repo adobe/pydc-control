@@ -172,6 +172,10 @@ class Project:
         return self.data.get('repository')
 
     @property
+    def pre_commit_config(self) -> Union[str, bool]:
+        return self.data.get('pre_commit_config', False)
+
+    @property
     def path(self) -> str:
         if not self.directory:
             raise KnownException(f'Project {self.name} does not have a directory, cannot get a path for it')

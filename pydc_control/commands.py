@@ -256,8 +256,11 @@ def _handle_extra_remotes(extra_remotes: List[str], project: Project) -> None:
 
 
 def _handle_pre_commit(project: Project) -> None:
+    if not project.pre_commit_config:
+        return
+
     # If there is a pre-commit config file, then copy it to each repo, git add it, and install it
-    pre_commit_config_path = config.get_pre_commit_config_path()
+    pre_commit_config_path = config.get_pre_commit_config_path(project.pre_commit_config)
     if os.path.exists(pre_commit_config_path):
         log.get_logger().debug(f'Pre-commit config file {pre_commit_config_path} exists, installing')
         pre_commit_file_name = os.path.basename(pre_commit_config_path)
