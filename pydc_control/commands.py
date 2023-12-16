@@ -14,6 +14,8 @@ import subprocess
 import time
 from typing import Dict, List, Optional, Union
 
+from pre_commit.constants import CONFIG_FILE as PRE_COMMIT_CONFIG_FILE
+
 from . import config, docker_compose_utils, docker_utils, log
 from .data import Project, Service
 from .exceptions import KnownException
@@ -266,7 +268,7 @@ def _handle_pre_commit(project: Project) -> None:
         pre_commit_file_name = os.path.basename(pre_commit_config_path)
         shutil.copy(
             pre_commit_config_path,
-            os.path.join(project.path, pre_commit_file_name),
+            os.path.join(project.path, PRE_COMMIT_CONFIG_FILE),
         )
         subprocess.call(['git', 'add', pre_commit_file_name], cwd=project.path)
         exit_code = subprocess.call(['pre-commit', 'install'], cwd=project.path)
