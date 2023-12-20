@@ -59,7 +59,7 @@ pluggy==1.2.0
     # via
     #   pytest
     #   tox
-pre-commit==3.6.0
+pre-commit==3.5.0
     # via -r test_requirements.in
 pygls==1.2.1
     # via ruff-lsp
