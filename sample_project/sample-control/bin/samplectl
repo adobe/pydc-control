@@ -1,8 +1,16 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "pydc-control",
+# ]
+# ///
 
 import argparse
 import os
 import sys
+from pathlib import Path
 
 import pydc_control
 
@@ -26,5 +34,5 @@ def configure_parsers(
 
 
 if __name__ == "__main__":
-    base_path = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+    base_path = Path(__file__).parent.parent.resolve()
     sys.exit(pydc_control.run(base_path, configure_parsers=configure_parsers))

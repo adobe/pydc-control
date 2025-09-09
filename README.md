@@ -25,6 +25,17 @@ upstream docker images or developing using local code.
   installing in each configured project
 
 
+## Development
+
+To develop pydc-control itself, you'll need to set up the development environment:
+
+1. Install [uv](https://docs.astral.sh/uv/) if you haven't already
+2. Clone the repository and navigate to the project directory
+3. Install dependencies: `uv sync`
+4. Run tests: `uv run pytest`
+
+The development dependencies include pytest, ruff for linting/formatting, and other tools needed for development.
+
 ## Setup
 
 ### Application filesystem layout
@@ -79,19 +90,27 @@ it into a local environment for easy execution.
 #### Control script
 
 Add a single python script to the project. Using naming such as `<app>ctl` is
-recommended to make it easy to execute.
+recommended to make it easy to execute. It is recommended to make this script run with
+``uv`` as that will ensure that the correct python version and dependencies are used.
 
 ```python
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "pydc-control",
+# ]
+# ///
 
-import os
 import sys
-import pydc_control
+from pathlib import Path
 
+import pydc_control
 
 if __name__ == '__main__':
     # The base path is the location of your control project
-    base_path = os.path.realpath(os.path.join(os.path.dirname(__file__), '..'))
+    base_path = Path(__file__).parent.parent.resolve()
     # Run pydc_control, returns an exit code
     sys.exit(pydc_control.run(base_path))
 ```
@@ -362,11 +381,19 @@ is enabled with s3).
 It is easy to create additional commands using pydc_control.
 
 ```python
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "pydc-control",
+# ]
+# ///
 
 import argparse
 import os
 import sys
+from pathlib import Path
 
 import pydc_control
 
@@ -393,7 +420,7 @@ def configure_parsers(parser: argparse.ArgumentParser, commands_parser: argparse
 
 
 if __name__ == '__main__':
-    base_path = os.path.realpath(os.path.join(os.path.dirname(__file__), '..'))
+    base_path = Path(__file__).parent.parent.resolve()
     sys.exit(pydc_control.run(base_path, configure_parsers))
 ```
 
