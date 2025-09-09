@@ -61,7 +61,7 @@ def _run_docker_compose_with_projects(
     docker_compose_args: List[str],
 ) -> int:
     # Always use the same project name to allow containers to be started/stopped from any repo
-    commands = ["docker-compose", "-p", config.get_dc_project()]
+    commands = ["docker", "compose", "-p", config.get_dc_project()]
     commands.extend(["-f", config.get_docker_compose_path()])
     for project in dev_projects:
         commands.extend(["-f", os.path.join(project.path, config.DOCKER_COMPOSE_FILE)])
@@ -87,7 +87,7 @@ def _run_docker_compose_with_projects(
         core_commands.extend(core_service_names)
 
         log.get_logger().info(
-            f'Starting {len(core_service_names)} core service(s) (detached) by calling {" ".join(core_commands)}'
+            f"Starting {len(core_service_names)} core service(s) (detached) by calling {' '.join(core_commands)}"
         )
         exit_code = call_commands(core_commands)
         if exit_code:
@@ -115,7 +115,7 @@ def _run_docker_compose_with_projects(
             base_commands.extend(base_services)
 
             log.get_logger().info(
-                f'Starting {len(base_services)} base service(s) (detached) by calling {" ".join(base_commands)}'
+                f"Starting {len(base_services)} base service(s) (detached) by calling {' '.join(base_commands)}"
             )
             exit_code = subprocess.call(base_commands)
             if exit_code:
@@ -139,7 +139,7 @@ def _run_docker_compose_with_projects(
             )
             commands.extend(all_services)
 
-    log.get_logger().info(f'Calling {" ".join(commands)}')
+    log.get_logger().info(f"Calling {' '.join(commands)}")
     return call_commands(commands)
 
 

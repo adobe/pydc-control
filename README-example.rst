@@ -12,14 +12,10 @@ this project.
 * `Docker <https://www.docker.com/>`_ must be installed on your machine and the ``docker-compose`` command must
   be available from the command line.
 * The ``git`` command must be available if using Git repositories and ``appctl`` will be used for cloning them.
-* A python environment or virtualenv. `pyenv <https://github.com/pyenv/pyenv>`_ is highly recommended to manage
-  your python installation for different versions.
-* The `pydc-control <https://github.com/adobe/pydc-control>`_ python module must be installed into your current
-  python environment or virtualenv before using ``appctl``. This may be installed from pypi by running:
-
-.. code-block:: console
-
-    pip install pydc-control
+* `uv <https://github.com/astral-sh/uv>`_ is highly recommended to manage virtualenvs and python versions. 
+  If using ``uv``, ensure that the ``uv`` command is available from the command line.
+* If ``uv`` is not used, the ``pydc-control`` module must be installed in your current Python environment.
+  This may be done by running ``pip install pydc-control``.
 
 Project setup
 #############

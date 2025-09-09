@@ -5,6 +5,7 @@ All Rights Reserved.
 NOTICE: Adobe permits you to use, modify, and distribute this file in accordance
 with the terms of the Adobe license agreement accompanying it.
 """
+
 import argparse
 import os
 from functools import lru_cache
@@ -42,7 +43,7 @@ class Service:
         The actual container name.
         """
         prefix = get_service_prefix("core" if self.core else "service")
-        return f'{prefix}{self.data.get("name")}'
+        return f"{prefix}{self.data.get('name')}"
 
     @property
     def dc_name(self):

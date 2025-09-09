@@ -8,7 +8,8 @@ with the terms of the Adobe license agreement accompanying it.
 
 import argparse
 import os
-from typing import Callable, List, Optional, Sequence
+from pathlib import Path
+from typing import Callable, List, Optional, Sequence, Union
 
 from . import commands, config, log
 from .data import Project, Service
@@ -289,7 +290,7 @@ def _detect_current_project(dev_project_names: List[str]) -> None:
 
 
 def run(
-    base_dir: str,
+    base_dir: Union[str, Path],
     configure_parsers: Callable = None,
     args: Optional[Sequence[str]] = None,
 ) -> int:
@@ -302,7 +303,7 @@ def run(
     :return: The exit code
     """
     # Initialize config based on the base dir
-    config.initialize(base_dir)
+    config.initialize(str(base_dir))
 
     args = _parse_args(configure_parsers, args)
 
