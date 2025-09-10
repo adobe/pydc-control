@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "pydc-control"
-version = "1.49"
+version = "2"
 description = "Used to control multiple docker compose projects in a coordinated way."
 readme = "README.md"
 license = {text = "MIT"}
