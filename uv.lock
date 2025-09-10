@@ -475,7 +475,7 @@ wheels = [
 
 [[package]]
 name = "pydc-control"
-version = "1.49"
+version = "2"
 source = { editable = "." }
 dependencies = [
     { name = "jinja2" },
